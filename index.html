@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Field Voice PRO | Fenotipagem Offline</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a472a">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(145deg, #1a472a 0%, #0e2a1a 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 12px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: rgba(255, 248, 225, 0.98);
+      border-radius: 32px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      padding: 1.2rem;
+      margin-bottom: 16px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #2b5e2f, #0f3b1a);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .badge {
+      background: #e9b567;
+      color: #2c2b26;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 40px;
+    }
+
+    .sub {
+      font-size: 0.75rem;
+      color: #4a5b3c;
+      margin: 4px 0 0 0;
+    }
+
+    .file-area {
+      background: #fef5e7;
+      border-radius: 32px;
+      padding: 10px 14px;
+      margin: 12px 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="file"] {
+      background: white;
+      border-radius: 40px;
+      padding: 10px 12px;
+      flex: 2;
+      border: 1px solid #c0b28a;
+      font-size: 0.75rem;
+    }
+
+    .action-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin: 16px 0;
+    }
+
+    button {
+      background: #2c5e2f;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 60px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.05s;
+      flex: 1;
+      min-width: 85px;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    .danger-btn {
+      background: #9e3c2c;
+    }
+
+    .export-btn {
+      background: #a7692a;
+    }
+
+    .reset-btn {
+      background: #6b5b3a;
+    }
+
+    .manual-input-area {
+      background: #2d3e2b;
+      border-radius: 60px;
+      padding: 8px 16px;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .manual-input-area label {
+      color: #f9eec1;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .nota-input {
+      background: white;
+      border: none;
+      border-radius: 60px;
+      padding: 10px 15px;
+      width: 80px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+
+    .nota-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px #e9b567;
+    }
+
+    .plot-card {
+      background: #ebe1c7;
+      border-radius: 32px;
+      padding: 0.8rem;
+      text-align: center;
+      margin: 12px 0;
+    }
+
+    #plot {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #1e3a1e;
+      word-break: break-word;
+    }
+
+    .nota-box {
+      background: #2f5d3a;
+      border-radius: 40px;
+      padding: 4px 12px;
+      display: inline-block;
+      color: #f9eec1;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+
+    #notaAtual {
+      font-size: 1.6rem;
+      font-weight: bold;
+      background: #00000030;
+      display: inline-block;
+      padding: 4px 18px;
+      border-radius: 40px;
+      margin-top: 8px;
+    }
+
+    .status-panel {
+      background: #2d3e2b;
+      border-radius: 40px;
+      color: #f2e8cf;
+      padding: 8px 14px;
+      margin: 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.7rem;
+    }
+
+    .debug-area {
+      background: #1e2a1a;
+      color: #c0e0a8;
+      font-family: monospace;
+      font-size: 0.8rem;
+      padding: 10px;
+      border-radius: 24px;
+      margin-top: 10px;
+      word-break: break-word;
+    }
+
+    .resultados-container {
+      background: #ebe1c7;
+      border-radius: 32px;
+      padding: 0.8rem;
+      margin-top: 16px;
+    }
+
+    .resultados-title {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #2d3e2b;
+      margin-bottom: 10px;
+      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .progresso-texto {
+      background: #2d3e2b;
+      color: #f9eec1;
+      padding: 4px 10px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+    }
+
+    .pagina-botoes {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .pagina-botoes button {
+      background: #2d3e2b;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      flex: 0 1 auto;
+      min-width: auto;
+    }
+
+    .scroll-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border-radius: 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tabela-resultados {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.7rem;
+    }
+
+    .tabela-resultados th,
+    .tabela-resultados td {
+      border: 1px solid #c0b28a;
+      padding: 10px 5px;
+      text-align: center;
+    }
+
+    .tabela-resultados th {
+      background: #2d3e2b;
+      color: #f9eec1;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+    }
+
+    .tabela-resultados tr {
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .tabela-resultados tr:active {
+      background: #d4c29b !important;
+    }
+
+    .tabela-resultados tr:nth-child(even) {
+      background: #f5eedb;
+    }
+
+    .tabela-resultados tr:nth-child(odd) {
+      background: #fff8e8;
+    }
+
+    .tabela-resultados .parcela-atual td {
+      background: #e9b567;
+      font-weight: bold;
+    }
+
+    .tabela-resultados .testemunha {
+      border-left: 3px solid #2c5e2f;
+    }
+
+    .tabela-resultados .avaliada td {
+      background: #c8e6c0;
+    }
+
+    .sem-dados {
+      text-align: center;
+      color: #8a7a5a;
+      padding: 30px;
+      font-style: italic;
+    }
+
+    .info-small {
+      font-size: 0.6rem;
+      color: #8a7a5a;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+      .card {
+        padding: 0.9rem;
+      }
+      button {
+        padding: 10px 12px;
+        font-size: 0.75rem;
+        min-width: 75px;
+      }
+      .tabela-resultados th,
+      .tabela-resultados td {
+        padding: 8px 3px;
+        font-size: 0.65rem;
+      }
+      #plot {
+        font-size: 1rem;
+      }
+      #notaAtual {
+        font-size: 1.3rem;
+      }
+      .nota-input {
+        width: 70px;
+        font-size: 1.1rem;
+        padding: 8px 10px;
+      }
+      .pagina-botoes button {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="header">
+      <h2>🌾 Field Voice</h2>
+      <span class="badge">🔊 100% offline</span>
+    </div>
+    <p class="sub">Fenotipagem offline - Feedback por beeps!</p>
+
+    <div class="file-area">
+      <input type="file" id="fileInput" accept=".csv">
+      <button onclick="carregarCSV()">📂 Carregar</button>
+    </div>
+
+    <div class="action-group">
+      <button onclick="startRecognition()">🎤 VOZ</button>
+      <button onclick="stopRecognition()" class="danger-btn">⛔ PARAR</button>
+      <button onclick="exportarCSV()" class="export-btn">💾 EXPORTAR</button>
+      <button onclick="resetarExperimento()" class="reset-btn">🔄 NOVO</button>
+    </div>
+
+    <div class="manual-input-area">
+      <label>✏️ NOTA:</label>
+      <input type="number" id="notaManualInput" class="nota-input" min="1" max="9" step="1" placeholder="1-9" inputmode="numeric">
+    </div>
+
+    <div class="plot-card">
+      <div id="plot">📋 Nenhum CSV</div>
+      <div class="nota-box">📌 NOTA ATUAL</div>
+      <div id="notaAtual">—</div>
+    </div>
+
+    <div class="status-panel">
+      <span>🎧 <span id="status">⏹️ Parado</span></span>
+      <span>🔊 <strong>nota 5 | voltar | próxima</strong></span>
+    </div>
+
+    <div class="debug-area">
+      🧠 <span id="debug">Aguardando CSV...</span>
+    </div>
+  </div>
+
+  <div class="resultados-container" id="resultadosContainer" style="display: none;">
+    <div class="resultados-title">
+      <span>📋 PARCELAS</span>
+      <span class="progresso-texto" id="progressoTexto">0 / 0</span>
+    </div>
+    <div class="scroll-container" id="scrollContainer">
+      <table class="tabela-resultados" id="tabelaResultados">
+        <thead>
+          <tr><th>Parc</th><th>Genótipo</th><th>Nota</th><th>Status</th></tr>
+        </thead>
+        <tbody id="corpoTabela">
+          <tr><td colspan="4" class="sem-dados">Carregue um CSV</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="paginaBotoesBottom" class="pagina-botoes"></div>
+    <div class="info-small">🔵 Toque na parcela para ir até ela | 🔹 Testemunha | ✅ Avaliada</div>
+  </div>
+</div>
+
+<script>
+  // ========== BEEP SYSTEM (100% OFFLINE) ==========
+  let audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  function beep(freq = 800, duration = 100) {
+    if (!audioCtx) return;
+    try {
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+      oscillator.frequency.value = freq;
+      oscillator.type = "sine";
+      oscillator.start();
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
+      oscillator.stop(audioCtx.currentTime + duration / 1000);
+    } catch(e) { console.log("beep error", e); }
+  }
+
+  function beepSucesso() {
+    beep(900, 100);
+    if (navigator.vibrate) navigator.vibrate(40);
+  }
+
+  function beepErro() {
+    // Som grave e longo para erro
+    beep(200, 300);
+    setTimeout(() => beep(150, 200), 350);
+    if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+  }
+
+  function beepNotaInvalida() {
+    // Som específico para nota inválida (fora do range 1-9)
+    beep(250, 250);
+    setTimeout(() => beep(180, 250), 300);
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+  }
+
+  function beepProxima() {
+    beep(800, 70);
+    setTimeout(() => beep(1000, 70), 90);
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+
+  function beepVira() {
+    beep(600, 100);
+    setTimeout(() => beep(900, 100), 100);
+    setTimeout(() => beep(1200, 100), 200);
+    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  }
+
+  function beepTestemunha() {
+    beep(500, 150);
+    setTimeout(() => beep(700, 150), 150);
+    if (navigator.vibrate) navigator.vibrate([40, 40]);
+  }
+
+  document.body.addEventListener('click', initAudio, { once: true });
+
+  // ========== FUNÇÃO FALAR (APENAS BEEPS, SEM VOZ) ==========
+  function falar(texto) {
+    if (!texto) return;
+    texto = texto.toString().toLowerCase();
+    
+    if (texto.includes("vira")) {
+      beepVira();
+    } else if (texto.includes("testemunha")) {
+      beepTestemunha();
+    } else if (texto.includes("inválido") || texto.includes("erro")) {
+      bepeErro(); // erro genérico
+    } else if (texto.includes("nota inválida") || texto.includes("invalida")) {
+      beepNotaInvalida();
+    } else if (texto.includes("pulado") || texto.includes("ok") || texto.includes("voltou")) {
+      beepProxima();
+    } else if (texto.match(/^[1-9]$/)) {
+      beepSucesso();
+    } else {
+      beepSucesso();
+    }
+    
+    console.log("[BEEP]", texto);
+  }
+
+  // Função específica para nota inválida
+  function notaInvalida() {
+    beepNotaInvalida();
+  }
+
+  // ========== CÓDIGO PRINCIPAL ==========
+  let current = 0;
+  let recognition = null;
+  let ativo = false;
+  let rodando = false;
+  let dados = [];
+  let nomeCSVOriginal = '';
+  let paginaAtual = 1;
+  const ITENS_POR_PAGINA = 100;
+
+  function salvarDados() {
+    if (!dados.length) return;
+    let estado = { dados, current, paginaAtual, nomeCSVOriginal };
+    localStorage.setItem('fieldVoiceData', JSON.stringify(estado));
+  }
+
+  function carregarDadosSalvos() {
+    let salvo = localStorage.getItem('fieldVoiceData');
+    if (!salvo) return false;
+    try {
+      let estado = JSON.parse(salvo);
+      if (estado.dados && estado.dados.length) {
+        dados = estado.dados;
+        current = estado.current;
+        paginaAtual = estado.paginaAtual || 1;
+        nomeCSVOriginal = estado.nomeCSVOriginal || '';
+        atualizarTela();
+        document.getElementById("debug").innerHTML = "✅ Dados recuperados! Continuando de onde parou.";
+        return true;
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  function resetarExperimento() {
+    if (confirm("⚠️ Tem certeza? Isso vai apagar TODOS os dados atuais.")) {
+      localStorage.removeItem('fieldVoiceData');
+      dados = [];
+      current = 0;
+      paginaAtual = 1;
+      nomeCSVOriginal = '';
+      if (recognition) try { recognition.stop(); } catch(e) {}
+      ativo = false;
+      rodando = false;
+      document.getElementById("status").innerHTML = "⏹️ Parado";
+      document.getElementById('fileInput').value = '';
+      atualizarTela();
+      document.getElementById("debug").innerHTML = "🔄 Experimento reiniciado! Carregue um novo CSV.";
+      falar("Experimento reiniciado");
+      document.getElementById("notaManualInput").focus();
+    }
+  }
+
+  function atualizarTabelaResultados() {
+    if (!dados.length) {
+      document.getElementById("resultadosContainer").style.display = 'none';
+      return;
+    }
+    document.getElementById("resultadosContainer").style.display = 'block';
+    
+    let avaliadas = dados.filter(d => d.nota !== null);
+    let percentual = Math.round((avaliadas.length/dados.length)*100);
+    document.getElementById("progressoTexto").innerHTML = `📊 ${avaliadas.length}/${dados.length} (${percentual}%)`;
+    
+    let totalPaginas = Math.ceil(dados.length / ITENS_POR_PAGINA);
+    let inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
+    let fim = Math.min(inicio + ITENS_POR_PAGINA, dados.length);
+    let parcelasPagina = dados.slice(inicio, fim);
+    
+    let botoesHtml = '';
+    if (paginaAtual > 1) botoesHtml += `<button onclick="mudarPagina(${paginaAtual - 1})">◀ Anterior</button>`;
+    botoesHtml += `<span style="margin:0 12px; font-weight:bold;">${paginaAtual} / ${totalPaginas}</span>`;
+    if (paginaAtual < totalPaginas) botoesHtml += `<button onclick="mudarPagina(${paginaAtual + 1})">Próxima ▶</button>`;
+    document.getElementById("paginaBotoesBottom").innerHTML = botoesHtml;
+    
+    let html = '';
+    for (let p of parcelasPagina) {
+      let classe = '';
+      let status = '';
+      let notaShow = p.nota !== null ? `<span style="font-weight:bold; color:#2c5e2f;">${p.nota}</span>` : '—';
+      if (p.nota !== null) { classe = 'avaliada'; status = '✅'; }
+      if (p.testemunha) { classe += ' testemunha'; status = '🔹'; }
+      if (current < dados.length && dados[current].plot_id === p.plot_id) { classe += ' parcela-atual'; status = '⭐'; }
+      if (p.nota === null && !p.testemunha && (current >= dados.length || dados[current].plot_id !== p.plot_id)) status = '⏳';
+      if (p.nota === null && p.testemunha && (current >= dados.length || dados[current].plot_id !== p.plot_id)) status = '🔹⏳';
+      
+      html += `<tr class="${classe}" onclick="irParaParcela(${p.plot_id})">
+                   <td><strong>${p.plot_id}</strong></td>
+                   <td>${p.genotipo.substring(0, 8)}</td>
+                   <td>${notaShow}</td>
+                   <td>${status}</td>
+                 </tr>`;
+    }
+    document.getElementById("corpoTabela").innerHTML = html;
+    
+    let idxAtual = dados.findIndex(d => d.plot_id === dados[current]?.plot_id);
+    if (idxAtual >= inicio && idxAtual < fim) {
+      setTimeout(() => {
+        let rows = document.getElementById("scrollContainer").querySelectorAll('tr');
+        for (let i = 0; i < rows.length; i++) {
+          if (rows[i].innerHTML.includes(`>${dados[current].plot_id}<`)) {
+            rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            break;
+          }
+        }
+      }, 80);
+    }
+  }
+
+  function mudarPagina(novaPagina) {
+    paginaAtual = novaPagina;
+    atualizarTabelaResultados();
+    salvarDados();
+  }
+
+  function atualizarTela() {
+    if (!dados.length) {
+      document.getElementById("plot").innerHTML = "📂 Carregue CSV";
+      document.getElementById("notaAtual").innerText = "-";
+      document.getElementById("resultadosContainer").style.display = 'none';
+      return;
+    }
+    if (current < dados.length) {
+      let d = dados[current];
+      let notaExibida = d.nota !== null ? d.nota : "⭕";
+      let testemunhaTag = d.testemunha ? " 🔹 TESTEMUNHA" : "";
+      document.getElementById("plot").innerHTML = `🌿 Parcela ${d.plot_id} | ${d.genotipo}${testemunhaTag}`;
+      document.getElementById("notaAtual").innerHTML = `${notaExibida}`;
+      
+      let indice = dados.findIndex(p => p.plot_id === d.plot_id);
+      let paginaCorreta = Math.floor(indice / ITENS_POR_PAGINA) + 1;
+      if (paginaCorreta !== paginaAtual) paginaAtual = paginaCorreta;
+      atualizarTabelaResultados();
+    } else {
+      document.getElementById("plot").innerHTML = "🏁 COLETA FINALIZADA!";
+      document.getElementById("notaAtual").innerHTML = "🎉";
+      atualizarTabelaResultados();
+    }
+  }
+
+  function configurarInputManual() {
+    let input = document.getElementById('notaManualInput');
+    input.addEventListener('input', function(e) {
+      let nota = parseInt(e.target.value);
+      if (isNaN(nota)) { 
+        e.target.value = ''; 
+        return; 
+      }
+      if (nota < 1 || nota > 9) {
+        notaInvalida();  // beep específico para nota inválida
+        falar(`${nota} inválido`);
+        e.target.value = '';
+        return;
+      }
+      if (dados.length && current < dados.length) salvarNota(nota);
+      else if (!dados.length) falar("Carregue CSV");
+      e.target.value = '';
+      setTimeout(() => e.target.focus(), 50);
+    });
+  }
+
+  function salvarNota(nota) {
+    if (!dados.length || current >= dados.length) return;
+    let notaValida = Math.min(9, Math.max(1, parseInt(nota)));
+    dados[current].nota = notaValida;
+    
+    let parcelaAtualNum = dados[current].plot_id;
+    let terminaZero = (parcelaAtualNum % 10 === 0);
+    
+    falar(`${notaValida}`);
+    if (terminaZero) {
+      let prox = dados[current + 1]?.plot_id || parcelaAtualNum;
+      setTimeout(() => falar(`vira, próxima ${prox}`), 400);
+    }
+    
+    if (current + 1 < dados.length) {
+      current++;
+      setTimeout(() => {
+        if (dados[current]?.testemunha) falar(`testemunha, parcela ${dados[current].plot_id}`);
+      }, 800);
+      atualizarTela();
+    } else {
+      current++;
+      atualizarTela();
+      falar("Coleta finalizada!");
+    }
+    salvarDados();
+  }
+
+  function pularParcela() {
+    if (!dados.length || current >= dados.length) return;
+    let antiga = dados[current].plot_id;
+    let terminaZero = (antiga % 10 === 0);
+    if (current + 1 < dados.length) {
+      current++;
+      if (terminaZero) setTimeout(() => falar(`vira, próxima ${dados[current].plot_id}`), 250);
+      atualizarTela();
+      falar("pulado");
+    } else { current++; atualizarTela(); falar("fim"); }
+    salvarDados();
+  }
+
+  function voltarParcela() {
+    if (!dados.length) return;
+    if (current > 0) { current--; atualizarTela(); falar("voltou"); salvarDados(); }
+    else falar("primeira");
+  }
+
+  function corrigirNota(val) {
+    if (!dados.length || current >= dados.length) return;
+    let num = Math.min(9, Math.max(1, parseInt(val)));
+    dados[current].nota = num;
+    atualizarTela();
+    falar(`corrigido ${num}`);
+    salvarDados();
+  }
+
+  function irParaParcela(id) {
+    let idx = dados.findIndex(d => d.plot_id === id);
+    if (idx >= 0) {
+      current = idx;
+      atualizarTela();
+      falar(`parcela ${id}, nota ${dados[current].nota ?? "sem nota"}`);
+      salvarDados();
+    } else falar(`parcela ${id} não encontrada`);
+  }
+
+  function carregarCSV() {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) { alert("Selecione um CSV: plot_id,genotipo,testemunha"); return; }
+    
+    nomeCSVOriginal = file.name.replace(/\.csv$/i, '');
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      let linhas = e.target.result.split(/\r?\n/);
+      let startRow = linhas[0].toLowerCase().includes('plot_id') ? 1 : 0;
+      let novos = [];
+      for (let i = startRow; i < linhas.length; i++) {
+        let linha = linhas[i].trim();
+        if (!linha) continue;
+        let cols = linha.includes(',') ? linha.split(',') : (linha.includes(';') ? linha.split(';') : linha.split(/\t/));
+        if (cols.length < 2) continue;
+        let plot_id = parseInt(cols[0]);
+        let genotipo = cols[1].trim();
+        let testemunha = false;
+        if (cols.length >= 3) testemunha = (cols[2].trim().toLowerCase() === 'sim' || cols[2].trim() === '1');
+        if (!isNaN(plot_id)) novos.push({ plot_id, genotipo, nota: null, testemunha });
+      }
+      if (!novos.length) { alert("CSV inválido. Use: plot_id,genotipo,testemunha"); return; }
+      dados = novos;
+      current = 0;
+      paginaAtual = 1;
+      atualizarTela();
+      falar(`${dados.length} parcelas carregadas`);
+      document.getElementById("debug").innerHTML = `✅ ${dados.length} parcelas. Dados serão salvos automaticamente!`;
+      salvarDados();
+    };
+    reader.readAsText(file, "UTF-8");
+  }
+
+  function exportarCSV() {
+    if (!dados.length) { alert("Nenhum dado para exportar"); return; }
+    
+    let csv = "plot_id,genotipo,testemunha,nota\n" + dados.map(d => `${d.plot_id},${d.genotipo},${d.testemunha?"sim":""},${d.nota??""}`).join("\n");
+    
+    let nomeBase = nomeCSVOriginal;
+    if (!nomeBase) {
+      let fileInput = document.getElementById('fileInput');
+      if (fileInput.files && fileInput.files[0]) nomeBase = fileInput.files[0].name.replace(/\.csv$/i, '');
+      else nomeBase = 'resultado';
+    }
+    
+    let agora = new Date();
+    let ano = agora.getFullYear().toString().slice(-2);
+    let mes = (agora.getMonth()+1).toString().padStart(2,'0');
+    let dia = agora.getDate().toString().padStart(2,'0');
+    let hora = agora.getHours().toString().padStart(2,'0');
+    let minuto = agora.getMinutes().toString().padStart(2,'0');
+    let timestamp = `${ano}${mes}${dia}_${hora}${minuto}`;
+    let nomeSugerido = `${nomeBase}_${timestamp}.csv`;
+    
+    let modal = document.createElement('div');
+    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:1000;`;
+    
+    let modalContent = document.createElement('div');
+    modalContent.style.cssText = `background:#fff8e8; border-radius:32px; padding:24px; max-width:90%; width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.3);`;
+    
+    modalContent.innerHTML = `
+      <h3 style="margin:0 0 10px 0; color:#1e3a1e;">💾 Nome do arquivo</h3>
+      <p style="font-size:0.7rem; color:#6b5b3a;">Timestamp: ${timestamp}</p>
+      <input type="text" id="nomeArquivoInput" value="${nomeSugerido}" style="width:100%; padding:10px; border:2px solid #c0b28a; border-radius:28px; font-size:0.9rem; margin:15px 0; text-align:center;">
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="confirmarExport" style="background:#2c5e2f; padding:8px 20px; border:none; border-radius:40px; color:white; font-weight:bold;">✅ Salvar</button>
+        <button id="cancelarExport" style="background:#9e3c2c; padding:8px 20px; border:none; border-radius:40px; color:white; font-weight:bold;">❌ Cancelar</button>
+      </div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    document.getElementById('confirmarExport').onclick = () => {
+      let nomeFinal = document.getElementById('nomeArquivoInput').value.trim();
+      if (!nomeFinal) nomeFinal = nomeSugerido;
+      if (!nomeFinal.endsWith('.csv')) nomeFinal += '.csv';
+      
+      let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+      let link = document.createElement("a");
+      let url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = nomeFinal;
+      link.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(modal);
+      falar("Exportado");
+    };
+    
+    document.getElementById('cancelarExport').onclick = () => {
+      document.body.removeChild(modal);
+      falar("Cancelado");
+    };
+  }
+
+  function startRecognition() {
+    if (rodando) { falar("já ativo"); return; }
+    if (!dados.length) { falar("Carregue CSV"); return; }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert("Navegador sem suporte a voz"); return; }
+    
+    recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    ativo = true;
+    
+    recognition.onstart = () => { 
+      rodando = true; 
+      document.getElementById("status").innerHTML = "🎙️ ouvindo..."; 
+    };
+    
+    recognition.onerror = (e) => { 
+      if (e.error === 'not-allowed') { 
+        ativo = false; 
+        rodando = false; 
+        document.getElementById("status").innerHTML = "❌ microfone bloqueado"; 
+      } 
+    };
+    
+    recognition.onresult = (event) => {
+      let textoOriginal = event.results[event.results.length-1][0].transcript.toLowerCase();
+      document.getElementById("debug").innerHTML = `📝 "${textoOriginal}"`;
+      let textoComparacao = textoOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      
+      if (textoComparacao.includes("voltar") || textoComparacao.includes("volta")) { 
+        voltarParcela(); 
+        falar("ok"); 
+        return; 
+      }
+      if (textoComparacao.includes("pular") || textoComparacao.includes("pula") || 
+          textoComparacao.includes("proxima") || textoComparacao.includes("proximo")) { 
+        pularParcela(); 
+        falar("ok"); 
+        return; 
+      }
+      if (textoComparacao.includes("corrigir") || textoComparacao.includes("corrige")) { 
+        let nums = textoComparacao.match(/\d+/); 
+        if (nums) corrigirNota(nums[0]); 
+        else falar("número?"); 
+        return; 
+      }
+      if (textoComparacao.includes("parcela atual") || textoComparacao.includes("qual parcela")) { 
+        if (current < dados.length) falar(`parcela ${dados[current].plot_id}`); 
+        return; 
+      }
+      if (textoComparacao.includes("parcela") || textoComparacao.includes("lote")) { 
+        let nums = textoComparacao.match(/\d+/); 
+        if (nums) { irParaParcela(parseInt(nums[0])); return; } 
+        else { falar("número?"); return; }
+      }
+      let num = textoComparacao.match(/\d+/);
+      if (num && num[0] >= 1 && num[0] <= 9) { 
+        salvarNota(parseInt(num[0])); 
+        return; 
+      } else if (num) {
+        // Número fora do range 1-9
+        notaInvalida();
+        falar(`nota ${num[0]} inválida`);
+        return;
+      }
+      let extenso = { "um":1, "dois":2, "tres":3, "quatro":4, "cinco":5, "seis":6, "sete":7, "oito":8, "nove":9 };
+      for (let [pal, val] of Object.entries(extenso)) {
+        if (textoComparacao.includes(pal)) { 
+          salvarNota(val); 
+          return; 
+        }
+      }
+      falar("comando?");
+    };
+    
+    recognition.onend = () => { 
+      rodando = false; 
+      if (ativo) { 
+        try { recognition.start(); } catch(e){} 
+      } else { 
+        document.getElementById("status").innerHTML = "⏹️ Parado"; 
+      } 
+    };
+    recognition.start();
+  }
+
+  function stopRecognition() { 
+    ativo = false; 
+    if (recognition) recognition.stop(); 
+    rodando = false; 
+    document.getElementById("status").innerHTML = "⏹️ Parado"; 
+    falar("voz off"); 
+  }
+
+  window.carregarCSV = carregarCSV;
+  window.startRecognition = startRecognition;
+  window.stopRecognition = stopRecognition;
+  window.exportarCSV = exportarCSV;
+  window.irParaParcela = irParaParcela;
+  window.mudarPagina = mudarPagina;
+  window.resetarExperimento = resetarExperimento;
+
+  window.onload = () => {
+    configurarInputManual();
+    document.getElementById("notaManualInput").focus();
+    if (!carregarDadosSalvos()) {
+      document.getElementById("debug").innerHTML = "✅ Pronto! Carregue um CSV para começar.";
+    }
+    initAudio();
+  };
+</script>
+</body>
+</html>
