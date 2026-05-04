@@ -376,9 +376,9 @@
   <div class="card">
     <div class="header">
       <h2>🌾 Field Voice</h2>
-      <span class="badge">🔊 100% offline</span>
+      <span class="badge">🎤 voz + beep offline</span>
     </div>
-    <p class="sub">Fenotipagem offline - Feedback por beeps!</p>
+    <p class="sub">Fenotipagem por voz - Sem loop! Versão definitiva</p>
 
     <div class="file-area">
       <input type="file" id="fileInput" accept=".csv">
@@ -405,7 +405,7 @@
 
     <div class="status-panel">
       <span>🎧 <span id="status">⏹️ Parado</span></span>
-      <span>🔊 <strong>Dica: sempre dizer "nota" 5 | voltar | próxima | parcela "x" | parcela atual</strong></span>
+      <span>🔊 <strong>nota 5 | voltar | próxima</strong></span>
     </div>
 
     <div class="debug-area">
@@ -465,14 +465,12 @@
   }
 
   function beepErro() {
-    // Som grave e longo para erro
     beep(200, 300);
     setTimeout(() => beep(150, 200), 350);
     if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
   }
 
   function beepNotaInvalida() {
-    // Som específico para nota inválida (fora do range 1-9)
     beep(250, 250);
     setTimeout(() => beep(180, 250), 300);
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -499,7 +497,6 @@
 
   document.body.addEventListener('click', initAudio, { once: true });
 
-  // ========== FUNÇÃO FALAR (APENAS BEEPS, SEM VOZ) ==========
   function falar(texto) {
     if (!texto) return;
     texto = texto.toString().toLowerCase();
@@ -509,7 +506,7 @@
     } else if (texto.includes("testemunha")) {
       beepTestemunha();
     } else if (texto.includes("inválido") || texto.includes("erro")) {
-      bepeErro(); // erro genérico
+      beepErro();
     } else if (texto.includes("nota inválida") || texto.includes("invalida")) {
       beepNotaInvalida();
     } else if (texto.includes("pulado") || texto.includes("ok") || texto.includes("voltou")) {
@@ -519,11 +516,9 @@
     } else {
       beepSucesso();
     }
-    
     console.log("[BEEP]", texto);
   }
 
-  // Função específica para nota inválida
   function notaInvalida() {
     beepNotaInvalida();
   }
@@ -537,6 +532,14 @@
   let nomeCSVOriginal = '';
   let paginaAtual = 1;
   const ITENS_POR_PAGINA = 100;
+  
+  // Controle de repetição de comandos
+  let ultimoComandoHash = '';
+  let ultimoComandoTimestamp = 0;
+
+  function getCommandHash(texto) {
+    return texto.replace(/\s/g, '').toLowerCase();
+  }
 
   function salvarDados() {
     if (!dados.length) return;
@@ -590,7 +593,7 @@
     
     let avaliadas = dados.filter(d => d.nota !== null);
     let percentual = Math.round((avaliadas.length/dados.length)*100);
-    document.getElementById("progressoTexto").innerHTML = `📊 ${avaliadas.length}/${dados.length} (${percentual}%)`;
+    document.getElementById("progressoTexto").innerHTML = 📊 ${avaliadas.length}/${dados.length} (${percentual}%);
     
     let totalPaginas = Math.ceil(dados.length / ITENS_POR_PAGINA);
     let inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
@@ -598,16 +601,16 @@
     let parcelasPagina = dados.slice(inicio, fim);
     
     let botoesHtml = '';
-    if (paginaAtual > 1) botoesHtml += `<button onclick="mudarPagina(${paginaAtual - 1})">◀ Anterior</button>`;
-    botoesHtml += `<span style="margin:0 12px; font-weight:bold;">${paginaAtual} / ${totalPaginas}</span>`;
-    if (paginaAtual < totalPaginas) botoesHtml += `<button onclick="mudarPagina(${paginaAtual + 1})">Próxima ▶</button>`;
+    if (paginaAtual > 1) botoesHtml += <button onclick="mudarPagina(${paginaAtual - 1})">◀️ Anterior</button>;
+    botoesHtml += <span style="margin:0 12px; font-weight:bold;">${paginaAtual} / ${totalPaginas}</span>;
+    if (paginaAtual < totalPaginas) botoesHtml += <button onclick="mudarPagina(${paginaAtual + 1})">Próxima ▶️</button>;
     document.getElementById("paginaBotoesBottom").innerHTML = botoesHtml;
     
     let html = '';
     for (let p of parcelasPagina) {
       let classe = '';
       let status = '';
-      let notaShow = p.nota !== null ? `<span style="font-weight:bold; color:#2c5e2f;">${p.nota}</span>` : '—';
+      let notaShow = p.nota !== null ? <span style="font-weight:bold; color:#2c5e2f;">${p.nota}</span> : '—';
       if (p.nota !== null) { classe = 'avaliada'; status = '✅'; }
       if (p.testemunha) { classe += ' testemunha'; status = '🔹'; }
       if (current < dados.length && dados[current].plot_id === p.plot_id) { classe += ' parcela-atual'; status = '⭐'; }
@@ -615,11 +618,11 @@
       if (p.nota === null && p.testemunha && (current >= dados.length || dados[current].plot_id !== p.plot_id)) status = '🔹⏳';
       
       html += `<tr class="${classe}" onclick="irParaParcela(${p.plot_id})">
-                   <td><strong>${p.plot_id}</strong></td>
-                   <td>${p.genotipo.substring(0, 8)}</td>
-                   <td>${notaShow}</td>
-                   <td>${status}</td>
-                 </tr>`;
+                  <td><strong>${p.plot_id}</strong></td>
+                  <td>${p.genotipo.substring(0, 8)}</td>
+                  <td>${notaShow}</td>
+                  <td>${status}</td>
+                </tr>`;
     }
     document.getElementById("corpoTabela").innerHTML = html;
     
@@ -628,7 +631,7 @@
       setTimeout(() => {
         let rows = document.getElementById("scrollContainer").querySelectorAll('tr');
         for (let i = 0; i < rows.length; i++) {
-          if (rows[i].innerHTML.includes(`>${dados[current].plot_id}<`)) {
+          if (rows[i].innerHTML.includes(>${dados[current].plot_id}<)) {
             rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
             break;
           }
@@ -654,8 +657,8 @@
       let d = dados[current];
       let notaExibida = d.nota !== null ? d.nota : "⭕";
       let testemunhaTag = d.testemunha ? " 🔹 TESTEMUNHA" : "";
-      document.getElementById("plot").innerHTML = `🌿 Parcela ${d.plot_id} | ${d.genotipo}${testemunhaTag}`;
-      document.getElementById("notaAtual").innerHTML = `${notaExibida}`;
+      document.getElementById("plot").innerHTML = 🌿 Parcela ${d.plot_id} | ${d.genotipo}${testemunhaTag};
+      document.getElementById("notaAtual").innerHTML = ${notaExibida};
       
       let indice = dados.findIndex(p => p.plot_id === d.plot_id);
       let paginaCorreta = Math.floor(indice / ITENS_POR_PAGINA) + 1;
@@ -677,8 +680,8 @@
         return; 
       }
       if (nota < 1 || nota > 9) {
-        notaInvalida();  // beep específico para nota inválida
-        falar(`${nota} inválido`);
+        notaInvalida();
+        falar(${nota} inválido);
         e.target.value = '';
         return;
       }
@@ -697,16 +700,16 @@
     let parcelaAtualNum = dados[current].plot_id;
     let terminaZero = (parcelaAtualNum % 10 === 0);
     
-    falar(`${notaValida}`);
+    falar(${notaValida});
     if (terminaZero) {
       let prox = dados[current + 1]?.plot_id || parcelaAtualNum;
-      setTimeout(() => falar(`vira, próxima ${prox}`), 400);
+      setTimeout(() => falar(vira, próxima ${prox}), 400);
     }
     
     if (current + 1 < dados.length) {
       current++;
       setTimeout(() => {
-        if (dados[current]?.testemunha) falar(`testemunha, parcela ${dados[current].plot_id}`);
+        if (dados[current]?.testemunha) falar(testemunha, parcela ${dados[current].plot_id});
       }, 800);
       atualizarTela();
     } else {
@@ -723,7 +726,7 @@
     let terminaZero = (antiga % 10 === 0);
     if (current + 1 < dados.length) {
       current++;
-      if (terminaZero) setTimeout(() => falar(`vira, próxima ${dados[current].plot_id}`), 250);
+      if (terminaZero) setTimeout(() => falar(vira, próxima ${dados[current].plot_id}), 250);
       atualizarTela();
       falar("pulado");
     } else { current++; atualizarTela(); falar("fim"); }
@@ -741,7 +744,7 @@
     let num = Math.min(9, Math.max(1, parseInt(val)));
     dados[current].nota = num;
     atualizarTela();
-    falar(`corrigido ${num}`);
+    falar(corrigido ${num});
     salvarDados();
   }
 
@@ -750,9 +753,9 @@
     if (idx >= 0) {
       current = idx;
       atualizarTela();
-      falar(`parcela ${id}, nota ${dados[current].nota ?? "sem nota"}`);
+      falar(parcela ${id}, nota ${dados[current].nota ?? "sem nota"});
       salvarDados();
-    } else falar(`parcela ${id} não encontrada`);
+    } else falar(parcela ${id} não encontrada);
   }
 
   function carregarCSV() {
@@ -782,8 +785,8 @@
       current = 0;
       paginaAtual = 1;
       atualizarTela();
-      falar(`${dados.length} parcelas carregadas`);
-      document.getElementById("debug").innerHTML = `✅ ${dados.length} parcelas. Dados serão salvos automaticamente!`;
+      falar(${dados.length} parcelas carregadas);
+      document.getElementById("debug").innerHTML = ✅ ${dados.length} parcelas. Dados serão salvos automaticamente!;
       salvarDados();
     };
     reader.readAsText(file, "UTF-8");
@@ -792,7 +795,7 @@
   function exportarCSV() {
     if (!dados.length) { alert("Nenhum dado para exportar"); return; }
     
-    let csv = "plot_id,genotipo,testemunha,nota\n" + dados.map(d => `${d.plot_id},${d.genotipo},${d.testemunha?"sim":""},${d.nota??""}`).join("\n");
+    let csv = "plot_id,genotipo,testemunha,nota\n" + dados.map(d => ${d.plot_id},${d.genotipo},${d.testemunha?"sim":""},${d.nota??""}).join("\n");
     
     let nomeBase = nomeCSVOriginal;
     if (!nomeBase) {
@@ -807,14 +810,14 @@
     let dia = agora.getDate().toString().padStart(2,'0');
     let hora = agora.getHours().toString().padStart(2,'0');
     let minuto = agora.getMinutes().toString().padStart(2,'0');
-    let timestamp = `${ano}${mes}${dia}_${hora}${minuto}`;
-    let nomeSugerido = `${nomeBase}_${timestamp}.csv`;
+    let timestamp = ${ano}${mes}${dia}_${hora}${minuto};
+    let nomeSugerido = ${nomeBase}_${timestamp}.csv;
     
     let modal = document.createElement('div');
-    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:1000;`;
+    modal.style.cssText = position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:1000;;
     
     let modalContent = document.createElement('div');
-    modalContent.style.cssText = `background:#fff8e8; border-radius:32px; padding:24px; max-width:90%; width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.3);`;
+    modalContent.style.cssText = background:#fff8e8; border-radius:32px; padding:24px; max-width:90%; width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.3);;
     
     modalContent.innerHTML = `
       <h3 style="margin:0 0 10px 0; color:#1e3a1e;">💾 Nome do arquivo</h3>
@@ -851,16 +854,26 @@
     };
   }
 
+  // ========== RECONHECIMENTO DE VOZ - VERSÃO SEM LOOP ==========
   function startRecognition() {
-    if (rodando) { falar("já ativo"); return; }
-    if (!dados.length) { falar("Carregue CSV"); return; }
+    if (rodando) { 
+      falar("já ativo"); 
+      return; 
+    }
+    if (!dados.length) { 
+      falar("Carregue CSV"); 
+      return; 
+    }
     
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { alert("Navegador sem suporte a voz"); return; }
+    if (!SpeechRecognition) { 
+      alert("Navegador sem suporte a voz"); 
+      return; 
+    }
     
     recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
-    recognition.continuous = true;
+    recognition.continuous = true;   // Mantém o microfone sempre aberto
     recognition.interimResults = false;
     ativo = true;
     
@@ -878,46 +891,77 @@
     };
     
     recognition.onresult = (event) => {
+      let agora = Date.now();
       let textoOriginal = event.results[event.results.length-1][0].transcript.toLowerCase();
-      document.getElementById("debug").innerHTML = `📝 "${textoOriginal}"`;
+      
+      let hashAtual = getCommandHash(textoOriginal);
+      
+      // IGNORA SE FOR O MESMO COMANDO EM MENOS DE 1.5 SEGUNDOS
+      if (hashAtual === ultimoComandoHash && (agora - ultimoComandoTimestamp) < 1500) {
+        document.getElementById("debug").innerHTML = ⏸️ Ignorado (repetição rápida): "${textoOriginal}";
+        return;
+      }
+      
+      ultimoComandoHash = hashAtual;
+      ultimoComandoTimestamp = agora;
+      
+      document.getElementById("debug").innerHTML = 📝 "${textoOriginal}";
+      
       let textoComparacao = textoOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
+      // VOLTAR
       if (textoComparacao.includes("voltar") || textoComparacao.includes("volta")) { 
         voltarParcela(); 
-        falar("ok"); 
+        falar("ok");
         return; 
       }
+      
+      // PULAR / PRÓXIMA
       if (textoComparacao.includes("pular") || textoComparacao.includes("pula") || 
           textoComparacao.includes("proxima") || textoComparacao.includes("proximo")) { 
         pularParcela(); 
-        falar("ok"); 
+        falar("ok");
         return; 
       }
+      
+      // CORRIGIR
       if (textoComparacao.includes("corrigir") || textoComparacao.includes("corrige")) { 
         let nums = textoComparacao.match(/\d+/); 
         if (nums) corrigirNota(nums[0]); 
         else falar("número?"); 
         return; 
       }
+      
+      // PARCELA ATUAL
       if (textoComparacao.includes("parcela atual") || textoComparacao.includes("qual parcela")) { 
-        if (current < dados.length) falar(`parcela ${dados[current].plot_id}`); 
+        if (current < dados.length) falar(parcela ${dados[current].plot_id}); 
         return; 
       }
+      
+      // IR PARA PARCELA X
       if (textoComparacao.includes("parcela") || textoComparacao.includes("lote")) { 
         let nums = textoComparacao.match(/\d+/); 
-        if (nums) { irParaParcela(parseInt(nums[0])); return; } 
-        else { falar("número?"); return; }
+        if (nums) { 
+          irParaParcela(parseInt(nums[0])); 
+          return; 
+        } else { 
+          falar("número?"); 
+          return; 
+        }
       }
+      
+      // NÚMERO DIRETO
       let num = textoComparacao.match(/\d+/);
       if (num && num[0] >= 1 && num[0] <= 9) { 
         salvarNota(parseInt(num[0])); 
         return; 
       } else if (num) {
-        // Número fora do range 1-9
         notaInvalida();
-        falar(`nota ${num[0]} inválida`);
+        falar(nota ${num[0]} inválida);
         return;
       }
+      
+      // NÚMEROS POR EXTENSO
       let extenso = { "um":1, "dois":2, "tres":3, "quatro":4, "cinco":5, "seis":6, "sete":7, "oito":8, "nove":9 };
       for (let [pal, val] of Object.entries(extenso)) {
         if (textoComparacao.includes(pal)) { 
@@ -925,6 +969,7 @@
           return; 
         }
       }
+      
       falar("comando?");
     };
     
@@ -936,6 +981,7 @@
         document.getElementById("status").innerHTML = "⏹️ Parado"; 
       } 
     };
+    
     recognition.start();
   }
 
