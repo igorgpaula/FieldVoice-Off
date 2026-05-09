@@ -1,1014 +1,2820 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>Field Voice PRO | Fenotipagem Offline</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1a472a">
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Field Voice PRO</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c3d2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FieldVoice">
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<style>
+:root {
+  --bg: #FFFFFF;
+  --card: #FFFFFF;
+  --nav: #163320;
+  --sys-green: #2DB84B;
+  --sys-green-lt: rgba(45,184,75,0.14);
+  --sys-blue: #007AFF;
+  --sys-blue-lt: rgba(0,122,255,0.13);
+  --sys-red: #FF3B30;
+  --sys-orange: #FF9500;
+  --sys-gray: #8E8E93;
+  --sys-gray2: #AEAEB2;
+  --label: #000000;
+  --label2: #3A3A3C;
+  --label3: #636366;
+  --sep: rgba(60,60,67,0.10);
+  --card-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 3px 10px rgba(0,0,0,0.07);
+  --card-shadow-lg: 0 4px 20px rgba(0,0,0,0.11), 0 1px 4px rgba(0,0,0,0.06);
+  --nav-sticky-offset: 76px;
+}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(145deg, #1a472a 0%, #0e2a1a 100%);
-      min-height: 100vh;
-      margin: 0;
-      padding: 12px;
-    }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  font-family: -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  min-height: 100%;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing: antialiased;
+}
+body.auth-locked { overflow: hidden; }
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top) + 22px) 18px calc(env(safe-area-inset-bottom) + 22px);
+  background: linear-gradient(160deg, #1e4530 0%, #07120b 100%);
+}
+body.auth-locked .auth-screen { display: flex; }
+.auth-card { width: min(420px, 100%); background: #fff; border-radius: 18px; padding: 20px; box-shadow: 0 18px 44px rgba(0,0,0,0.28); }
+.auth-brand { color: #163320; font-size: 1.05rem; font-weight: 900; margin-bottom: 14px; }
+.auth-title { color: var(--label); font-size: 1.45rem; font-weight: 900; margin-bottom: 14px; }
+.auth-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 14px; background: rgba(118,118,128,0.12); border-radius: 11px; padding: 3px; }
+.auth-tab { border: none; border-radius: 9px; padding: 9px 4px; background: transparent; color: var(--label2); font-size: 0.74rem; font-weight: 800; }
+.auth-tab.ativo { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.14); color: var(--label); }
+.auth-form { display: grid; gap: 10px; }
+.auth-input { width: 100%; border: 1.5px solid var(--sep); border-radius: 12px; padding: 13px 12px; font-size: 0.94rem; font-weight: 700; color: var(--label); }
+.auth-input:focus { outline: none; border-color: var(--sys-green); box-shadow: 0 0 0 4px rgba(45,184,75,0.12); }
+.auth-primary { border: none; border-radius: 12px; padding: 13px 14px; background: var(--sys-green); color: #fff; font-size: 0.92rem; font-weight: 900; cursor: pointer; }
+.auth-primary:disabled { opacity: 0.55; cursor: default; }
+.auth-msg { min-height: 18px; font-size: 0.76rem; color: var(--label3); line-height: 1.45; }
+.auth-msg.erro { color: var(--sys-red); }
+.auth-msg.ok { color: var(--sys-green); }
+.auth-offline { display: none; border: 1px solid rgba(45,184,75,0.26); border-radius: 12px; padding: 10px 12px; color: var(--label2); background: rgba(45,184,75,0.08); font-size: 0.76rem; line-height: 1.45; }
+.auth-offline.ativo { display: block; }
+.auth-logout { border: none; border-radius: 20px; padding: 4px 8px; background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.9); font-size: 0.62rem; font-weight: 800; display: none; }
+body.authenticated .auth-logout { display: inline-flex; }
 
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-    }
+.nav-bar {
+  background: linear-gradient(160deg, #1e4530 0%, #163320 100%);
+  padding: calc(env(safe-area-inset-top) + 12px) 14px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title controls"
+    "debug debug";
+  align-items: center;
+  gap: 7px 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.22);
+}
+.nav-left { display: contents; }
+.nav-title {
+  grid-area: title;
+  min-width: 0;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-sub {
+  grid-area: debug;
+  color: rgba(255,255,255,0.74);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-width: 100%;
+}
+.mode-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
+}
+.mode-badge.offline { background: rgba(45,184,75,0.25); color: #3dca5e; }
+.mode-badge.web { background: rgba(255,59,48,0.22); color: #ff6b62; }
 
-    .card {
-      background: rgba(255, 248, 225, 0.98);
-      border-radius: 32px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      padding: 1.2rem;
-      margin-bottom: 16px;
-    }
+.nav-right {
+  grid-area: controls;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 142px;
+}
+.voice-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.92);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.voice-pill .status-dot {
+  width: 7px;
+  height: 7px;
+  background: rgba(255,255,255,0.5);
+}
+.voice-pill .status-dot.active {
+  background: #3dca5e;
+  box-shadow: 0 0 0 3px rgba(61,202,94,0.22);
+}
+.voice-pill #status { color: inherit; font-size: inherit; font-weight: inherit; }
+.rede-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  border-radius: 20px;
+  padding: 4px 8px 4px 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s;
+}
+.rede-toggle.online { background: rgba(0,122,255,0.22); color: #5ac8fa; }
+.rede-toggle.offline { background: rgba(142,142,147,0.22); color: #aeaeb2; }
+.rede-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.rede-toggle.online .rede-dot { background: #5ac8fa; }
+.rede-toggle.offline .rede-dot { background: #636366; }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
+.content { padding: 12px 0 4px; }
+.current-panel {
+  position: sticky;
+  top: var(--nav-sticky-offset);
+  z-index: 80;
+  background: rgba(255,255,255,0.96);
+  padding: 8px 0 1px;
+  box-shadow: 0 10px 18px rgba(255,255,255,0.94);
+}
+.current-panel .section-label { margin-top: 0; }
+.current-panel .hero-card { margin-bottom: 8px; padding: 14px 16px 13px; border-radius: 18px; }
+.current-panel .hero-eyebrow { margin-bottom: 4px; }
+.current-panel .plot-parcela { font-size: 1.18rem; }
+.current-panel .plot-genotipo { font-size: 0.9rem; }
+.current-panel .notas-container { margin-top: 10px; gap: 8px; }
+.current-panel .nota-individual .valor { width: 46px; height: 46px; border-radius: 14px; font-size: 1.25rem; }
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--label3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 0 20px 7px;
+  margin-top: 14px;
+}
 
-    h2 {
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #2b5e2f, #0f3b1a);
-      background-clip: text;
-      -webkit-background-clip: text;
-      color: transparent;
-    }
+.ios-card {
+  background: var(--card);
+  border-radius: 16px;
+  margin: 0 16px 12px;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
 
-    .badge {
-      background: #e9b567;
-      color: #2c2b26;
-      font-size: 0.65rem;
-      font-weight: bold;
-      padding: 4px 10px;
-      border-radius: 40px;
-    }
+.seg-wrap { padding: 12px 14px 14px; }
+.seg-ctrl {
+  background: rgba(118,118,128,0.12);
+  border-radius: 10px;
+  padding: 2px;
+  display: flex;
+  gap: 1px;
+}
+.seg-btn {
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--label2);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.seg-btn.ativo {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.14), 0 0 1px rgba(0,0,0,0.06);
+  color: var(--label);
+}
 
-    .sub {
-      font-size: 0.75rem;
-      color: #4a5b3c;
-      margin: 4px 0 0 0;
-    }
+.file-row { display: flex; align-items: center; padding: 14px 16px; gap: 12px; }
+.file-icon { font-size: 1.3rem; }
+.file-info { flex: 1; min-width: 0; }
+.file-title { font-size: 0.9rem; font-weight: 600; color: var(--label); }
+.file-desc { font-size: 0.68rem; color: var(--label3); margin-top: 1px; overflow-wrap: anywhere; }
+.file-pick-label {
+  background: var(--sys-blue-lt);
+  color: var(--sys-blue);
+  border-radius: 11px;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+input[type="file"] { display: none; }
 
-    .file-area {
-      background: #fef5e7;
-      border-radius: 32px;
-      padding: 10px 14px;
-      margin: 12px 0;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
+.hero-card {
+  background: var(--card);
+  border-radius: 22px;
+  margin: 0 16px 12px;
+  padding: 20px 20px 18px;
+  box-shadow: var(--card-shadow-lg);
+  border: 1px solid rgba(255,255,255,0.8);
+}
+.hero-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--label3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+#plot {
+  color: var(--label);
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+.plot-parcela {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 1.35rem;
+  font-weight: 850;
+}
+.plot-genotipo {
+  display: block;
+  margin-top: 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--label2);
+  overflow-wrap: anywhere;
+}
+.plot-badge {
+  color: #34C759;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.notas-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.nota-individual { text-align: center; }
+.nota-individual .label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--label3);
+  margin-bottom: 6px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.nota-individual .valor {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  background: rgba(118,118,128,0.09);
+  color: var(--label2);
+  border: 1.5px solid transparent;
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.nota-individual .valor.filled {
+  background: var(--sys-green-lt);
+  color: var(--sys-green);
+  border-color: rgba(45,184,75,0.25);
+}
+.nota-individual .valor.active {
+  background: var(--sys-blue);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(0,122,255,0.35);
+  transform: scale(1.08);
+}
 
-    input[type="file"] {
-      background: white;
-      border-radius: 40px;
-      padding: 10px 12px;
-      flex: 2;
-      border: 1px solid #c0b28a;
-      font-size: 0.75rem;
-    }
+.input-card {
+  background: var(--card);
+  border-radius: 18px;
+  margin: 0 16px 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--card-shadow-lg);
+  border: 1.5px solid var(--sys-blue-lt);
+  animation: slideDown 0.22s cubic-bezier(0.34,1.4,0.64,1) both;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.input-label { font-size: 0.88rem; font-weight: 700; color: var(--label2); white-space: nowrap; }
+#notaDigitada {
+  flex: 1;
+  max-width: 80px;
+  border: 2px solid var(--sep);
+  border-radius: 13px;
+  padding: 12px 8px;
+  font-size: 1.7rem;
+  font-weight: 800;
+  text-align: center;
+  background: var(--bg);
+  color: var(--label);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: all 0.18s;
+}
+#notaDigitada:focus {
+  outline: none;
+  border-color: var(--sys-blue);
+  box-shadow: 0 0 0 4px rgba(0,122,255,0.15);
+  background: #fff;
+}
+.range-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+}
+.range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.range-field label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--label3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.range-field input {
+  width: 100%;
+  border: 1.5px solid var(--sep);
+  border-radius: 12px;
+  padding: 12px 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--label);
+  background: #fff;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.range-field input:focus {
+  outline: none;
+  border-color: var(--sys-blue);
+  box-shadow: 0 0 0 4px rgba(0,122,255,0.12);
+}
+.manual-ok-btn {
+  background: var(--sys-blue);
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  padding: 12px 16px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  min-height: 44px;
+}
+.setup-card {
+  background: var(--card);
+  border-radius: 16px;
+  margin: 0 16px 12px;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.setup-step {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--sep);
+}
+.setup-step:last-child { border-bottom: none; }
+.setup-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.setup-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--sys-green-lt);
+  color: var(--sys-green);
+  font-size: 0.72rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.setup-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--label2);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+  gap: 7px;
+}
+.setup-input {
+  width: 100%;
+  border: 1.5px solid var(--sep);
+  border-radius: 10px;
+  padding: 9px 7px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--label);
+  background: #fff;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.setup-input:focus {
+  outline: none;
+  border-color: var(--sys-blue);
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+}
+.setup-select {
+  width: 100%;
+  border: 1.5px solid var(--sep);
+  border-radius: 12px;
+  padding: 12px 10px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--label);
+  background: #fff;
+}
+.setup-file-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.guide-btn {
+  border: none;
+  border-radius: 11px;
+  background: var(--sys-blue-lt);
+  color: var(--sys-blue);
+  padding: 9px 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
 
-    .action-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin: 16px 0;
-    }
+@media (min-width: 560px) {
+  .setup-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "avaliacoes nomes"
+      "faixa idioma"
+      "csv csv";
+  }
+  .setup-step { border-bottom: 1px solid var(--sep); }
+  .setup-step:nth-child(1) { grid-area: avaliacoes; border-right: 1px solid var(--sep); }
+  .setup-step:nth-child(2) { grid-area: nomes; }
+  .setup-step:nth-child(3) { grid-area: faixa; border-right: 1px solid var(--sep); border-bottom: none; }
+  .setup-step:nth-child(4) { grid-area: idioma; border-bottom: none; }
+  .setup-step:nth-child(5) { grid-area: csv; border-top: 1px solid var(--sep); border-bottom: none; }
+  .setup-grid { grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); }
+}
 
-    button {
-      background: #2c5e2f;
-      border: none;
-      padding: 12px 16px;
-      border-radius: 60px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      color: white;
-      cursor: pointer;
-      transition: transform 0.05s;
-      flex: 1;
-      min-width: 85px;
-      touch-action: manipulation;
-    }
+.status-card {
+  background: var(--card);
+  border-radius: 16px;
+  margin: 0 16px 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--card-shadow);
+}
+.status-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--sys-gray2);
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.status-dot.active {
+  background: var(--sys-green);
+  box-shadow: 0 0 0 3px rgba(45,184,75,0.2);
+  animation: pulse-dot 1.4s infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { box-shadow: 0 0 0 3px rgba(45,184,75,0.2); }
+  50% { box-shadow: 0 0 0 7px rgba(45,184,75,0); }
+}
+#status { font-size: 0.85rem; font-weight: 700; color: var(--label2); }
+.status-hint { font-size: 0.65rem; color: var(--label3); margin-left: auto; text-align: right; line-height: 1.5; }
 
-    button:active {
-      transform: scale(0.96);
-    }
+#gridContainer {
+  background: var(--card);
+  border-radius: 16px;
+  margin: 0 16px 12px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+.grid-header-bar {
+  padding: 13px 16px 11px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--label3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--sep);
+}
+.pagina-botoes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--sep);
+}
+.pagina-botoes button {
+  background: rgba(0,122,255,0.1);
+  color: var(--sys-blue);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pagina-botoes span { font-size: 0.78rem; color: var(--label2); font-weight: 500; }
+.scroll-container { max-height: 360px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.grid-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.grid-table th {
+  background: #F7F7F7;
+  color: var(--label3);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--sep);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.grid-table td {
+  padding: 13px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--sep);
+  cursor: pointer;
+  color: var(--label);
+  font-size: 0.88rem;
+}
+.grid-table td:first-child {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--label2);
+  padding-left: 14px;
+}
+.grid-table td:active { background: rgba(0,0,0,0.05) !important; }
+.grid-table .linha-atual td { background: rgba(52,199,89,0.07); }
+.grid-table .linha-atual td:first-child { color: var(--sys-green); font-weight: 800; }
+.grid-table .coluna-ativa { background: rgba(0,122,255,0.1) !important; color: var(--sys-blue) !important; font-weight: 700; }
+.grid-table .testemunha td:first-child { padding-left: 10px; border-left: 4px solid var(--sys-green); }
+.grid-info {
+  padding: 9px 16px;
+  font-size: 0.6rem;
+  color: var(--label3);
+  text-align: center;
+  border-top: 1px solid var(--sep);
+}
 
-    .danger-btn {
-      background: #9e3c2c;
-    }
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: rgba(252,252,254,0.92);
+  -webkit-backdrop-filter: saturate(200%) blur(28px);
+  backdrop-filter: saturate(200%) blur(28px);
+  border-top: 0.5px solid rgba(60,60,67,0.18);
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -1px 0 rgba(60,60,67,0.1), 0 -4px 16px rgba(0,0,0,0.06);
+}
+.bar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  padding: 8px 6px;
+  border-radius: 14px;
+  cursor: pointer;
+  min-width: 48px;
+  min-height: 50px;
+  transition: transform 0.12s cubic-bezier(0.34,1.56,0.64,1), background 0.15s;
+}
+.bar-btn:active { transform: scale(0.85); }
+.bar-icon { font-size: 1.5rem; line-height: 1; }
+.bar-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0; }
+.bar-btn.primary .bar-label { color: var(--sys-green); }
+.bar-btn.danger .bar-label { color: var(--sys-red); }
+.bar-btn.export .bar-label { color: var(--sys-orange); }
+.bar-btn.manual .bar-label { color: var(--sys-blue); }
+.bar-btn.manual.ativo { background: var(--sys-blue); }
+.bar-btn.manual.ativo .bar-label { color: #fff; }
+.bar-btn.manual.ativo .bar-icon { filter: brightness(100); }
+.bar-btn.reset .bar-label { color: var(--sys-gray); }
+.bar-btn.lock .bar-label { color: var(--label2); }
 
-    .export-btn {
-      background: #a7692a;
-    }
+.pocket-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 24px);
+  background: #07120b;
+  color: #fff;
+  text-align: center;
+  touch-action: none;
+  user-select: none;
+}
+.pocket-lock.ativo { display: flex; }
+.pocket-title { font-size: 1.25rem; font-weight: 900; letter-spacing: 0; }
+.pocket-status { font-size: 0.86rem; line-height: 1.45; color: rgba(255,255,255,0.72); max-width: 280px; }
+.pocket-unlock {
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  padding: 14px 20px;
+  min-width: 210px;
+  font-size: 0.86rem;
+  font-weight: 900;
+  overflow: hidden;
+  position: relative;
+}
+.pocket-unlock::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: rgba(45,184,75,0.38);
+  transition: width 0.12s linear;
+}
+.pocket-unlock.segurando::before { width: 100%; transition: width 2.2s linear; }
+.pocket-unlock span { position: relative; z-index: 1; }
 
-    .reset-btn {
-      background: #6b5b3a;
-    }
+@keyframes nota-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.22); box-shadow: 0 6px 20px rgba(45,184,75,0.4); }
+  100% { transform: scale(1.08); }
+}
+.nota-pop { animation: nota-pop 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 
-    .manual-input-area {
-      background: #2d3e2b;
-      border-radius: 60px;
-      padding: 8px 16px;
-      margin: 12px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+.debug-pill {
+  background: rgba(0,0,0,0.04);
+  border-radius: 12px;
+  margin: 0 16px 12px;
+  padding: 10px 14px;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 0.65rem;
+  color: var(--label3);
+  line-height: 1.5;
+  border: 1px solid rgba(0,0,0,0.06);
+}
 
-    .manual-input-area label {
-      color: #f9eec1;
-      font-weight: bold;
-      font-size: 0.9rem;
-    }
+.descricao-card {
+  display: none;
+  margin-top: 14px;
+  background: rgba(255,149,0,0.10);
+  border-radius: 12px;
+  padding: 10px 13px;
+  align-items: flex-start;
+  gap: 8px;
+}
+.descricao-icon { font-size: 1rem; flex-shrink: 0; }
+.descricao-texto { font-size: 0.82rem; font-weight: 600; color: #3A3A3C; line-height: 1.5; flex: 1; }
+.descricao-clear {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #8E8E93;
+  cursor: pointer;
+  padding: 0 0 0 6px;
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
+}
 
-    .nota-input {
-      background: white;
-      border: none;
-      border-radius: 60px;
-      padding: 10px 15px;
-      width: 80px;
-      text-align: center;
-      font-weight: bold;
-      font-size: 1.3rem;
-    }
-
-    .nota-input:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px #e9b567;
-    }
-
-    .plot-card {
-      background: #ebe1c7;
-      border-radius: 32px;
-      padding: 0.8rem;
-      text-align: center;
-      margin: 12px 0;
-    }
-
-    #plot {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: #1e3a1e;
-      word-break: break-word;
-    }
-
-    .nota-box {
-      background: #2f5d3a;
-      border-radius: 40px;
-      padding: 4px 12px;
-      display: inline-block;
-      color: #f9eec1;
-      font-weight: bold;
-      font-size: 0.8rem;
-    }
-
-    #notaAtual {
-      font-size: 1.6rem;
-      font-weight: bold;
-      background: #00000030;
-      display: inline-block;
-      padding: 4px 18px;
-      border-radius: 40px;
-      margin-top: 8px;
-    }
-
-    .status-panel {
-      background: #2d3e2b;
-      border-radius: 40px;
-      color: #f2e8cf;
-      padding: 8px 14px;
-      margin: 12px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 0.7rem;
-    }
-
-    .debug-area {
-      background: #1e2a1a;
-      color: #c0e0a8;
-      font-family: monospace;
-      font-size: 0.8rem;
-      padding: 10px;
-      border-radius: 24px;
-      margin-top: 10px;
-      word-break: break-word;
-    }
-
-    .resultados-container {
-      background: #ebe1c7;
-      border-radius: 32px;
-      padding: 0.8rem;
-      margin-top: 16px;
-    }
-
-    .resultados-title {
-      font-size: 0.9rem;
-      font-weight: bold;
-      color: #2d3e2b;
-      margin-bottom: 10px;
-      text-align: center;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .progresso-texto {
-      background: #2d3e2b;
-      color: #f9eec1;
-      padding: 4px 10px;
-      border-radius: 30px;
-      font-size: 0.7rem;
-    }
-
-    .pagina-botoes {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin: 12px 0;
-    }
-
-    .pagina-botoes button {
-      background: #2d3e2b;
-      padding: 10px 20px;
-      font-size: 0.9rem;
-      flex: 0 1 auto;
-      min-width: auto;
-    }
-
-    .scroll-container {
-      max-height: 400px;
-      overflow-y: auto;
-      border-radius: 24px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .tabela-resultados {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.7rem;
-    }
-
-    .tabela-resultados th,
-    .tabela-resultados td {
-      border: 1px solid #c0b28a;
-      padding: 10px 5px;
-      text-align: center;
-    }
-
-    .tabela-resultados th {
-      background: #2d3e2b;
-      color: #f9eec1;
-      font-weight: bold;
-      position: sticky;
-      top: 0;
-    }
-
-    .tabela-resultados tr {
-      cursor: pointer;
-      transition: background 0.1s;
-    }
-
-    .tabela-resultados tr:active {
-      background: #d4c29b !important;
-    }
-
-    .tabela-resultados tr:nth-child(even) {
-      background: #f5eedb;
-    }
-
-    .tabela-resultados tr:nth-child(odd) {
-      background: #fff8e8;
-    }
-
-    .tabela-resultados .parcela-atual td {
-      background: #e9b567;
-      font-weight: bold;
-    }
-
-    .tabela-resultados .testemunha {
-      border-left: 3px solid #2c5e2f;
-    }
-
-    .tabela-resultados .avaliada td {
-      background: #c8e6c0;
-    }
-
-    .sem-dados {
-      text-align: center;
-      color: #8a7a5a;
-      padding: 30px;
-      font-style: italic;
-    }
-
-    .info-small {
-      font-size: 0.6rem;
-      color: #8a7a5a;
-      text-align: center;
-      margin-top: 8px;
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 8px;
-      }
-      .card {
-        padding: 0.9rem;
-      }
-      button {
-        padding: 10px 12px;
-        font-size: 0.75rem;
-        min-width: 75px;
-      }
-      .tabela-resultados th,
-      .tabela-resultados td {
-        padding: 8px 3px;
-        font-size: 0.65rem;
-      }
-      #plot {
-        font-size: 1rem;
-      }
-      #notaAtual {
-        font-size: 1.3rem;
-      }
-      .nota-input {
-        width: 70px;
-        font-size: 1.1rem;
-        padding: 8px 10px;
-      }
-      .pagina-botoes button {
-        padding: 8px 16px;
-        font-size: 0.8rem;
-      }
-    }
-  </style>
+@media (max-width: 375px) {
+  .bar-btn { min-width: 44px; padding: 7px 4px; }
+  .bar-icon { font-size: 1.3rem; }
+  .bar-label { font-size: 0.56rem; }
+  .nota-individual .valor { width: 46px; height: 46px; font-size: 1.25rem; }
+  .plot-parcela { font-size: 1.12rem; }
+  .plot-genotipo { font-size: 0.86rem; }
+}
+</style>
 </head>
-<body>
-<div class="container">
-  <div class="card">
-    <div class="header">
-      <h2>🌾 Field Voice</h2>
-      <span class="badge">🎤 voz + beep offline</span>
-    </div>
-    <p class="sub">Fenotipagem por voz - Sem loop! Versão definitiva</p>
+<body class="auth-locked">
 
-    <div class="file-area">
-      <input type="file" id="fileInput" accept=".csv">
-      <button onclick="carregarCSV()">📂 Carregar</button>
-    </div>
 
-    <div class="action-group">
-      <button onclick="startRecognition()">🎤 VOZ</button>
-      <button onclick="stopRecognition()" class="danger-btn">⛔ PARAR</button>
-      <button onclick="exportarCSV()" class="export-btn">💾 EXPORTAR</button>
-      <button onclick="resetarExperimento()" class="reset-btn">🔄 NOVO</button>
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">🌾 Field Voice PRO</div>
+    <div class="auth-title" id="authTitle">Entrar</div>
+    <div class="auth-tabs">
+      <button class="auth-tab ativo" id="authTabLogin" type="button" onclick="setAuthMode('login')">Login</button>
+      <button class="auth-tab" id="authTabSignup" type="button" onclick="setAuthMode('signup')">Criar conta</button>
+      <button class="auth-tab" id="authTabReset" type="button" onclick="setAuthMode('reset')">Senha</button>
     </div>
-
-    <div class="manual-input-area">
-      <label>✏️ NOTA:</label>
-      <input type="number" id="notaManualInput" class="nota-input" min="1" max="9" step="1" placeholder="1-9" inputmode="numeric">
-    </div>
-
-    <div class="plot-card">
-      <div id="plot">📋 Nenhum CSV</div>
-      <div class="nota-box">📌 NOTA ATUAL</div>
-      <div id="notaAtual">—</div>
-    </div>
-
-    <div class="status-panel">
-      <span>🎧 <span id="status">⏹️ Parado</span></span>
-      <span>🔊 <strong>nota 5 | voltar | próxima</strong></span>
-    </div>
-
-    <div class="debug-area">
-      🧠 <span id="debug">Aguardando CSV...</span>
+    <div class="auth-form">
+      <input class="auth-input" id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="email@exemplo.com">
+      <input class="auth-input" id="authPassword" type="password" autocomplete="current-password" placeholder="Senha">
+      <button class="auth-primary" id="authPrimary" type="button" onclick="executarAuth()">Entrar</button>
+      <div class="auth-offline" id="authOfflineMsg">Sessão local encontrada. O app pode abrir offline com o último login deste aparelho.</div>
+      <div class="auth-msg" id="authMsg"></div>
     </div>
   </div>
-
-  <div class="resultados-container" id="resultadosContainer" style="display: none;">
-    <div class="resultados-title">
-      <span>📋 PARCELAS</span>
-      <span class="progresso-texto" id="progressoTexto">0 / 0</span>
+</div>
+<div class="nav-bar">
+  <div class="nav-left">
+    <span class="nav-title">🌾 Field Voice PRO</span>
+    <span class="nav-sub" id="debug" aria-live="polite">Aguardando CSV...</span>
+  </div>
+  <div class="nav-right">
+    <span id="badgeModo" class="mode-badge offline">carregando...</span>
+    <button id="toggleRede" class="rede-toggle offline" onclick="toggleRede()">
+      <span class="rede-dot"></span>
+      <span id="redeLabel">OFFLINE</span>
+    </button>
+    <button class="auth-logout" id="authLogoutBtn" type="button" onclick="logoutFirebase()">Sair</button>
+    <div class="voice-pill" aria-live="polite">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="status">Parado</span>
     </div>
-    <div class="scroll-container" id="scrollContainer">
-      <table class="tabela-resultados" id="tabelaResultados">
-        <thead>
-          <tr><th>Parc</th><th>Genótipo</th><th>Nota</th><th>Status</th></tr>
-        </thead>
-        <tbody id="corpoTabela">
-          <tr><td colspan="4" class="sem-dados">Carregue um CSV</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div id="paginaBotoesBottom" class="pagina-botoes"></div>
-    <div class="info-small">🔵 Toque na parcela para ir até ela | 🔹 Testemunha | ✅ Avaliada</div>
   </div>
 </div>
 
+<div class="content">
+  <p class="section-label">Configuração guiada</p>
+  <div class="setup-card">
+    <div class="setup-step">
+      <div class="setup-head">
+        <span class="setup-num">1</span>
+        <span class="setup-title">Número de avaliações</span>
+        <button class="guide-btn" onclick="falarGuiaConfiguracao()">Guia</button>
+      </div>
+      <div class="seg-ctrl">
+        <button class="seg-btn" onclick="setNumAvaliacoes(1)">1</button>
+        <button class="seg-btn" onclick="setNumAvaliacoes(2)">2</button>
+        <button class="seg-btn" onclick="setNumAvaliacoes(3)">3</button>
+        <button class="seg-btn" onclick="setNumAvaliacoes(4)">4</button>
+        <button class="seg-btn ativo" onclick="setNumAvaliacoes(5)">5</button>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-head">
+        <span class="setup-num">2</span>
+        <span class="setup-title">Nome das avaliações</span>
+      </div>
+      <div class="setup-grid" id="avaliacaoNomesGrid"></div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-head">
+        <span class="setup-num">3</span>
+        <span class="setup-title">Mínimo e máximo</span>
+      </div>
+      <div class="range-row" style="padding:0;">
+        <div class="range-field">
+          <label for="notaMinInput">Mínima</label>
+          <input type="number" id="notaMinInput" inputmode="numeric" value="1" onchange="setFaixaNotas()">
+        </div>
+        <div class="range-field">
+          <label for="notaMaxInput">Máxima</label>
+          <input type="number" id="notaMaxInput" inputmode="numeric" value="9" onchange="setFaixaNotas()">
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-head">
+        <span class="setup-num">4</span>
+        <span class="setup-title">Idioma da voz</span>
+      </div>
+      <select id="idiomaSelect" class="setup-select" onchange="setIdiomaApp()">
+        <option value="pt">Português</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-head">
+        <span class="setup-num">5</span>
+        <span class="setup-title">Carregar CSV</span>
+      </div>
+      <div class="setup-file-row">
+        <div class="file-info">
+          <div class="file-title">Arquivo de parcelas</div>
+          <div class="file-desc" id="fileLabel">plot_id · genotipo · testemunha</div>
+        </div>
+        <label class="file-pick-label">
+          Selecionar
+          <input type="file" id="fileInput" accept=".csv" onchange="carregarCSV()">
+        </label>
+      </div>
+    </div>
+  </div>
+
+<div class="current-panel">
+    <p class="section-label">Parcela atual</p>
+    <div class="hero-card">
+    <div class="hero-eyebrow">em avaliação</div>
+    <div id="plot">📋 Nenhum CSV carregado</div>
+    <div id="notasDisplay" class="notas-container"></div>
+    <div id="descricaoCard" class="descricao-card">
+      <span class="descricao-icon">📝</span>
+      <span id="descricaoTexto" class="descricao-texto"></span>
+      <button class="descricao-clear" onclick="limparDescricao()">✕</button>
+</div>
+  </div>
+  </div>
+
+  <div class="input-card" id="manualCard" style="display:none;">
+    <span class="input-label">⌨️ Nota</span>
+    <input type="text" id="notaDigitada" inputmode="numeric" pattern="[0-9]*" placeholder="-" autocomplete="off">
+    <button class="manual-ok-btn" onclick="confirmarNotaManual()">OK</button>
+  </div>
+
+<p class="section-label" id="gridLabel" style="display:none">Parcelas</p>
+  <div id="gridContainer" style="display:none">
+    <div class="grid-header-bar">📋 Lista de parcelas - toque para editar</div>
+    <div id="paginacao" class="pagina-botoes"></div>
+    <div class="scroll-container" id="scrollContainer">
+      <table class="grid-table" id="gridTable">
+        <thead id="gridHeader">
+          <tr><th>Parcela</th><th>Nota</th></tr>
+        </thead>
+        <tbody id="gridBody"></tbody>
+      </table>
+    </div>
+    <div class="grid-info">🔹 Verde = Testemunha &nbsp;·&nbsp; 🔸 Azul = célula ativa</div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="bar-btn primary" onclick="startRecognition()">
+    <span class="bar-icon">🎤</span>
+    <span class="bar-label">Voz</span>
+  </button>
+  <button class="bar-btn danger" onclick="stopRecognition()">
+    <span class="bar-icon">⛔</span>
+    <span class="bar-label">Parar</span>
+  </button>
+  <button class="bar-btn manual" id="btnManual" onclick="toggleManual()">
+    <span class="bar-icon">⌨️</span>
+    <span class="bar-label">Manual</span>
+  </button>
+  <button class="bar-btn export" onclick="exportarCSV()">
+    <span class="bar-icon">💾</span>
+    <span class="bar-label">Exportar</span>
+  </button>
+  <button class="bar-btn reset" onclick="resetarExperimento()">
+    <span class="bar-icon">🔄</span>
+    <span class="bar-label">Novo</span>
+  </button>
+  <button class="bar-btn lock" onclick="ativarModoBolso()">
+    <span class="bar-icon">🔒</span>
+    <span class="bar-label">Bolso</span>
+  </button>
+</div>
+
+<div class="pocket-lock" id="pocketLock" aria-live="polite">
+  <div class="pocket-title">Modo bolso ativo</div>
+  <div class="pocket-status" id="pocketStatus">Toques acidentais bloqueados. A voz continua sendo usada para registrar as notas.</div>
+  <button class="pocket-unlock" id="pocketUnlock" type="button"><span>Segure para desbloquear</span></button>
+</div>
+
 <script>
-  // ========== BEEP SYSTEM (100% OFFLINE) ==========
-  let audioCtx = null;
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyAuRmWvSZpTRbBjKlLQrEndxh9m5BHLZq0',
+  authDomain: 'fieldvoice-pro.firebaseapp.com',
+  projectId: 'fieldvoice-pro',
+  appId: '1:1091574984817:web:9cbca50b38a0cdea74ebd0'
+};
+const AUTH_SESSION_KEY = 'fieldVoiceAuthSession';
+let firebaseAuth = null;
+let authMode = 'login';
 
-  function initAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function firebaseConfigPreenchida() {
+  return Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.authDomain && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.appId);
+}
+
+function setAuthMsg(texto, tipo = '') {
+  const msg = document.getElementById('authMsg');
+  if (!msg) return;
+  msg.className = `auth-msg ${tipo}`.trim();
+  msg.textContent = texto || '';
+}
+
+function setAuthMode(modo) {
+  authMode = modo;
+  const cfg = {
+    login: ['Entrar', 'Entrar', true],
+    signup: ['Criar conta', 'Criar conta', true],
+    reset: ['Recuperar senha', 'Enviar email de recuperação', false]
+  }[modo] || ['Entrar', 'Entrar', true];
+  document.getElementById('authTitle').textContent = cfg[0];
+  document.getElementById('authPrimary').textContent = cfg[1];
+  document.getElementById('authPassword').style.display = cfg[2] ? 'block' : 'none';
+  document.getElementById('authTabLogin').classList.toggle('ativo', modo === 'login');
+  document.getElementById('authTabSignup').classList.toggle('ativo', modo === 'signup');
+  document.getElementById('authTabReset').classList.toggle('ativo', modo === 'reset');
+  setAuthMsg('');
+}
+
+function sessaoAuthLocal() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || 'null');
+  } catch (e) {
+    return null;
+  }
+}
+
+function salvarSessaoAuthLocal(user) {
+  if (!user) return;
+  try {
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({
+      uid: user.uid,
+      email: user.email || '',
+      savedAt: Date.now()
+    }));
+  } catch (e) {}
+}
+
+function limparSessaoAuthLocal() {
+  try { localStorage.removeItem(AUTH_SESSION_KEY); } catch (e) {}
+}
+
+function liberarAppAutenticado(user, offline = false) {
+  document.body.classList.remove('auth-locked');
+  document.body.classList.add('authenticated');
+  const email = user?.email || 'usuário autenticado';
+  const debug = document.getElementById('debug');
+  if (debug) debug.textContent = offline ? `🔐 Sessão offline: ${email}` : `🔐 ${email}`;
+  atualizarOffsetFixo?.();
+}
+
+function bloquearAppAuth(mensagem) {
+  document.body.classList.add('auth-locked');
+  document.body.classList.remove('authenticated');
+  setAuthMsg(mensagem, mensagem ? 'erro' : '');
+  atualizarOffsetFixo?.();
+}
+
+function iniciarAuthFirebase() {
+  const sessaoLocal = sessaoAuthLocal();
+  document.getElementById('authOfflineMsg')?.classList.toggle('ativo', Boolean(sessaoLocal));
+
+  if (!firebaseConfigPreenchida()) {
+    if (sessaoLocal && !navigator.onLine) {
+      liberarAppAutenticado(sessaoLocal, true);
+      return Promise.resolve(true);
     }
+    bloquearAppAuth('Configure o FIREBASE_CONFIG no HTML para ativar login, cadastro e recuperação de senha.');
+    return Promise.resolve(false);
   }
 
-  function beep(freq = 800, duration = 100) {
-    if (!audioCtx) return;
-    try {
-      const oscillator = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      oscillator.connect(gain);
-      gain.connect(audioCtx.destination);
-      oscillator.frequency.value = freq;
-      oscillator.type = "sine";
-      oscillator.start();
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
-      oscillator.stop(audioCtx.currentTime + duration / 1000);
-    } catch(e) { console.log("beep error", e); }
-  }
-
-  function beepSucesso() {
-    beep(900, 100);
-    if (navigator.vibrate) navigator.vibrate(40);
-  }
-
-  function beepErro() {
-    beep(200, 300);
-    setTimeout(() => beep(150, 200), 350);
-    if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
-  }
-
-  function beepNotaInvalida() {
-    beep(250, 250);
-    setTimeout(() => beep(180, 250), 300);
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-  }
-
-  function beepProxima() {
-    beep(800, 70);
-    setTimeout(() => beep(1000, 70), 90);
-    if (navigator.vibrate) navigator.vibrate(30);
-  }
-
-  function beepVira() {
-    beep(600, 100);
-    setTimeout(() => beep(900, 100), 100);
-    setTimeout(() => beep(1200, 100), 200);
-    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-  }
-
-  function beepTestemunha() {
-    beep(500, 150);
-    setTimeout(() => beep(700, 150), 150);
-    if (navigator.vibrate) navigator.vibrate([40, 40]);
-  }
-
-  document.body.addEventListener('click', initAudio, { once: true });
-
-  function falar(texto) {
-    if (!texto) return;
-    texto = texto.toString().toLowerCase();
-    
-    if (texto.includes("vira")) {
-      beepVira();
-    } else if (texto.includes("testemunha")) {
-      beepTestemunha();
-    } else if (texto.includes("inválido") || texto.includes("erro")) {
-      beepErro();
-    } else if (texto.includes("nota inválida") || texto.includes("invalida")) {
-      beepNotaInvalida();
-    } else if (texto.includes("pulado") || texto.includes("ok") || texto.includes("voltou")) {
-      beepProxima();
-    } else if (texto.match(/^[1-9]$/)) {
-      beepSucesso();
-    } else {
-      beepSucesso();
+  if (!window.firebase?.auth) {
+    if (sessaoLocal) {
+      liberarAppAutenticado(sessaoLocal, true);
+      return Promise.resolve(true);
     }
-    console.log("[BEEP]", texto);
+    bloquearAppAuth('Firebase não carregou. Conecte à internet para entrar.');
+    return Promise.resolve(false);
   }
 
-  function notaInvalida() {
-    beepNotaInvalida();
+  try {
+    const app = firebase.apps?.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseAuth = firebase.auth(app);
+    firebaseAuth.languageCode = 'pt-BR';
+    firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+  } catch (e) {
+    bloquearAppAuth('Não foi possível iniciar o Firebase Auth. Confira a configuração.');
+    return Promise.resolve(false);
   }
 
-  // ========== CÓDIGO PRINCIPAL ==========
-  let current = 0;
-  let recognition = null;
-  let ativo = false;
-  let rodando = false;
-  let dados = [];
-  let nomeCSVOriginal = '';
-  let paginaAtual = 1;
-  const ITENS_POR_PAGINA = 100;
-  
-  // Controle de repetição de comandos
-  let ultimoComandoHash = '';
-  let ultimoComandoTimestamp = 0;
-
-  function getCommandHash(texto) {
-    return texto.replace(/\s/g, '').toLowerCase();
-  }
-
-  function salvarDados() {
-    if (!dados.length) return;
-    let estado = { dados, current, paginaAtual, nomeCSVOriginal };
-    localStorage.setItem('fieldVoiceData', JSON.stringify(estado));
-  }
-
-  function carregarDadosSalvos() {
-    let salvo = localStorage.getItem('fieldVoiceData');
-    if (!salvo) return false;
-    try {
-      let estado = JSON.parse(salvo);
-      if (estado.dados && estado.dados.length) {
-        dados = estado.dados;
-        current = estado.current;
-        paginaAtual = estado.paginaAtual || 1;
-        nomeCSVOriginal = estado.nomeCSVOriginal || '';
-        atualizarTela();
-        document.getElementById("debug").innerHTML = "✅ Dados recuperados! Continuando de onde parou.";
-        return true;
+  return new Promise(resolve => {
+    firebaseAuth.onAuthStateChanged(user => {
+      if (user) {
+        salvarSessaoAuthLocal(user);
+        liberarAppAutenticado(user, false);
+        resolve(true);
+      } else if (!navigator.onLine && sessaoLocal) {
+        liberarAppAutenticado(sessaoLocal, true);
+        resolve(true);
+      } else {
+        bloquearAppAuth('Entre para continuar.');
+        resolve(false);
       }
-    } catch(e) {}
+    }, () => {
+      if (sessaoLocal) {
+        liberarAppAutenticado(sessaoLocal, true);
+        resolve(true);
+      } else {
+        bloquearAppAuth('Falha ao validar login.');
+        resolve(false);
+      }
+    });
+  });
+}
+
+async function executarAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const senha = document.getElementById('authPassword').value;
+  const btn = document.getElementById('authPrimary');
+  if (!email) {
+    setAuthMsg('Informe o email.', 'erro');
+    return;
+  }
+  if (authMode !== 'reset' && senha.length < 6) {
+    setAuthMsg('A senha precisa ter pelo menos 6 caracteres.', 'erro');
+    return;
+  }
+  if (!firebaseConfigPreenchida()) {
+    setAuthMsg('Preencha o FIREBASE_CONFIG antes de usar Firebase Auth.', 'erro');
+    return;
+  }
+  if (!firebaseAuth) await iniciarAuthFirebase();
+  if (!firebaseAuth) return;
+
+  btn.disabled = true;
+  setAuthMsg('Conectando...');
+  try {
+    if (authMode === 'signup') {
+      await firebaseAuth.createUserWithEmailAndPassword(email, senha);
+      setAuthMsg('Conta criada.', 'ok');
+    } else if (authMode === 'reset') {
+      await firebaseAuth.sendPasswordResetEmail(email);
+      setAuthMsg('Email de recuperação enviado.', 'ok');
+    } else {
+      await firebaseAuth.signInWithEmailAndPassword(email, senha);
+      setAuthMsg('Login realizado.', 'ok');
+    }
+  } catch (e) {
+    setAuthMsg(mensagemErroAuth(e), 'erro');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function mensagemErroAuth(e) {
+  const code = e?.code || '';
+  if (code.includes('invalid-email')) return 'Email inválido.';
+  if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential')) return 'Email ou senha incorretos.';
+  if (code.includes('email-already-in-use')) return 'Este email já possui conta.';
+  if (code.includes('weak-password')) return 'Senha fraca. Use pelo menos 6 caracteres.';
+  if (code.includes('network-request-failed')) return 'Sem conexão para validar login.';
+  return 'Não foi possível concluir a autenticação.';
+}
+
+async function logoutFirebase() {
+  limparSessaoAuthLocal();
+  try { await firebaseAuth?.signOut(); } catch (e) {}
+  bloquearAppAuth('Sessão encerrada.');
+}
+const isNative = () =>
+  window.Capacitor &&
+  typeof window.Capacitor.isNativePlatform === 'function' &&
+  window.Capacitor.isNativePlatform();
+
+function atualizarOffsetFixo() {
+  const nav = document.querySelector('.nav-bar');
+  if (nav) document.documentElement.style.setProperty('--nav-sticky-offset', `${nav.offsetHeight}px`);
+}
+
+function atualizarBadgeModo() {
+  const b = document.getElementById('badgeModo');
+  if (isNative()) {
+    b.className = 'mode-badge offline';
+    b.textContent = '📴 offline nativo';
+  } else {
+    b.className = 'mode-badge web';
+    b.textContent = '🌐 modo web';
+  }
+}
+
+function setStatusVoz(ativado) {
+  const dot = document.getElementById('statusDot');
+  const status = document.getElementById('status');
+  if (dot) dot.classList.toggle('active', ativado);
+  if (status) status.textContent = ativado ? 'Ouvindo' : 'Parado';
+}
+
+let NUM_AVALIACOES = 5;
+let colunaAtual = 1;
+let NOMES_AVALIACOES = ['A1', 'A2', 'A3', 'A4', 'A5'];
+
+function setNumAvaliacoes(num) {
+  NUM_AVALIACOES = num;
+  document.querySelectorAll('.seg-btn').forEach((btn, i) => {
+    btn.classList.toggle('ativo', i + 1 === num);
+  });
+
+  if (dados.length > 0) {
+    for (let i = 0; i < dados.length; i++) {
+      for (let j = 1; j <= NUM_AVALIACOES; j++) {
+        if (dados[i][`nota${j}`] === undefined) dados[i][`nota${j}`] = null;
+      }
+      for (let j = NUM_AVALIACOES + 1; j <= 10; j++) delete dados[i][`nota${j}`];
+    }
+  }
+
+  atualizarColunaAtual();
+  atualizarNomesAvaliacoesUI();
+  atualizarTela();
+  salvarDados();
+}
+
+function atualizarColunaAtual() {
+  if (!dados.length || current >= dados.length) {
+    colunaAtual = 1;
+    return;
+  }
+
+  const p = dados[current];
+  for (let j = 1; j <= NUM_AVALIACOES; j++) {
+    if (p[`nota${j}`] === null) {
+      colunaAtual = j;
+      return;
+    }
+  }
+  colunaAtual = NUM_AVALIACOES;
+}
+
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function beep(freq, dur) {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    osc.start();
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur / 1000);
+    osc.stop(audioCtx.currentTime + dur / 1000);
+  } catch (e) {}
+}
+
+function vibrar(padrao) {
+  if (navigator.vibrate) navigator.vibrate(padrao);
+}
+
+function beepNota() { beep(900,100); vibrar(40); }
+function beepCorrecao() { beep(950,80); beep(900,80); vibrar([40,40]); }
+function beepVira() { beep(600,100); setTimeout(()=>beep(900,100),100); setTimeout(()=>beep(1200,100),200); vibrar([50,50,50]); }
+function beepTestemunha() { beep(500,150); setTimeout(()=>beep(700,150),150); vibrar([40,40]); }
+function beepNavegacao() { beep(700,80); vibrar(30); }
+function beepErro() { beep(300,250); vibrar([80,60,80]); }
+function beepOffline() {
+  beep(1000, 180);
+  setTimeout(() => beep(520, 260), 220);
+  setTimeout(() => beep(260, 420), 540);
+  vibrar([180, 80, 180, 80, 260]);
+}
+function beepParcelaCompleta() {
+  beep(880, 180);
+  setTimeout(() => beep(780, 180), 220);
+  setTimeout(() => beep(660, 320), 440);
+}
+
+function _falarWeb(frase, rate = 1.25) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(frase);
+  utt.lang = cfgIdioma().speech;
+  utt.rate = rate;
+  window.speechSynthesis.speak(utt);
+}
+
+function falarTexto(frase, rate = 1.25) {
+  if (!modoOnline) return;
+  const tts = window.Capacitor?.Plugins?.TextToSpeech;
+  if (tts) {
+    tts.speak({ text: frase, lang: cfgIdioma().speech, rate, pitch: 1.0, volume: 1.0, category: 'ambient' })
+      .catch(() => _falarWeb(frase, rate));
+  } else {
+    _falarWeb(frase, rate);
+  }
+}
+
+function falarAvisoLocal(frase, rate = 1.35) {
+  const tts = window.Capacitor?.Plugins?.TextToSpeech;
+  if (tts) {
+    tts.speak({ text: frase, lang: cfgIdioma().speech, rate, pitch: 1.0, volume: 1.0, category: 'ambient' })
+      .catch(() => _falarWeb(frase, rate));
+  } else {
+    _falarWeb(frase, rate);
+  }
+}
+
+function fraseParcelaAtual(incluirParcela = true) {
+  const d = dados[current];
+  const partes = [];
+  const c = cfgIdioma();
+  if (incluirParcela) partes.push(`${c.plot} ${d.plot_id}`);
+  if (d.testemunha) partes.push(`${c.witness} ${d.genotipo}`);
+  return partes.join('. ');
+}
+
+function falarParcelaSeNecessario() {
+  if (!dados.length || current >= dados.length || !modoOnline) return;
+  const d = dados[current];
+  if (d.testemunha) {
+    falarTexto(fraseParcelaAtual(d.plot_id % 10 === 0), 1.28);
+  } else if (d.plot_id % 10 === 0) {
+    falarTexto(`${cfgIdioma().plot} ${d.plot_id}`, 1.35);
+  }
+}
+
+function falarParcelaAtual() {
+  if (!dados.length || current >= dados.length) {
+    beepErro();
+    return;
+  }
+  beepNavegacao();
+  falarTexto(fraseParcelaAtual(true), 1.25);
+}
+
+document.body.addEventListener('click', () => {
+  initAudio();
+  if (window.speechSynthesis) {
+    const u = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(u);
+  }
+}, { once: true });
+
+let dados = [];
+let current = 0;
+let ativo = false;
+let rodando = false;
+let nomeCSV = '';
+let paginaAtual = 1;
+const POR_PAGINA = 100;
+let modoDescricao = false;
+let modoOnline = navigator.onLine;
+const DEFAULT_NOTA_MIN = 1;
+const DEFAULT_NOTA_MAX = 9;
+let NOTA_MIN = DEFAULT_NOTA_MIN;
+let NOTA_MAX = DEFAULT_NOTA_MAX;
+let FAIXA_NOTAS_PERSONALIZADA = false;
+let IDIOMA_APP = 'pt';
+
+const APP_VERSION = '2026-05-08-guided-eval-names-1';
+
+const IDIOMAS = {
+  pt: {
+    html: 'pt-BR',
+    speech: 'pt-BR',
+    confirm: 'Entendi.',
+    plot: 'Parcela',
+    witness: 'Testemunha, genótipo',
+    notFound: n => `Parcela ${n} não encontrada`,
+    invalid: 'Não válido',
+    offline: 'Offline. Use teclado.',
+    rangeSet: 'Faixa de notas',
+    commands: {
+      currentPlot: ['parcela atual', 'qual parcela', 'que parcela', 'parcela tal'],
+      skipPlot: ['pular parcela', 'proxima parcela', 'avancar parcela'],
+      next: ['proxima', 'proximo', 'pular', 'pula'],
+      back: ['voltar', 'volta', 'anterior'],
+      description: ['descricao'],
+      plotWords: ['parcela']
+    }
+  },
+  en: {
+    html: 'en-US',
+    speech: 'en-US',
+    confirm: 'Got it.',
+    plot: 'Plot',
+    witness: 'Check, genotype',
+    notFound: n => `Plot ${n} not found`,
+    invalid: 'Not valid',
+    offline: 'Offline. Use keyboard.',
+    rangeSet: 'Note range',
+    commands: {
+      currentPlot: ['current plot', 'which plot', 'what plot'],
+      skipPlot: ['skip plot', 'next plot', 'advance plot'],
+      next: ['next', 'skip', 'advance'],
+      back: ['back', 'previous'],
+      description: ['description', 'note comment', 'comment'],
+      plotWords: ['plot']
+    }
+  },
+  es: {
+    html: 'es-ES',
+    speech: 'es-ES',
+    confirm: 'Entendido.',
+    plot: 'Parcela',
+    witness: 'Testigo, genotipo',
+    notFound: n => `Parcela ${n} no encontrada`,
+    invalid: 'No válido',
+    offline: 'Sin conexión. Use teclado.',
+    rangeSet: 'Rango de notas',
+    commands: {
+      currentPlot: ['parcela actual', 'cual parcela', 'que parcela'],
+      skipPlot: ['saltar parcela', 'siguiente parcela', 'avanzar parcela'],
+      next: ['siguiente', 'proximo', 'proxima', 'saltar', 'salta', 'avanzar'],
+      back: ['volver', 'atras', 'anterior'],
+      description: ['descripcion', 'comentario'],
+      plotWords: ['parcela']
+    }
+  }
+};
+
+function cfgIdioma() {
+  return IDIOMAS[IDIOMA_APP] || IDIOMAS.pt;
+}
+
+function incluiAlgum(raw, termos) {
+  return termos.some(t => raw.includes(t));
+}
+
+function normalizarTextoVoz(texto) {
+  return String(texto || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function atualizarUIFaixaNotas() {
+  const minInp = document.getElementById('notaMinInput');
+  const maxInp = document.getElementById('notaMaxInput');
+  const label = document.querySelector('.input-label');
+  const hint = document.getElementById('rangeHint');
+  const notaInp = document.getElementById('notaDigitada');
+
+  if (minInp) minInp.value = NOTA_MIN;
+  if (maxInp) maxInp.value = NOTA_MAX;
+  if (label) label.textContent = `⌨️ Nota ${NOTA_MIN}-${NOTA_MAX}`;
+  if (hint) hint.innerHTML = `nota ${NOTA_MIN}-${NOTA_MAX}<br>offline: teclado`;
+  if (notaInp) {
+    notaInp.placeholder = `${NOTA_MIN}-${NOTA_MAX}`;
+    notaInp.setAttribute('maxlength', String(Math.max(String(NOTA_MIN).length, String(NOTA_MAX).length, 2)));
+    notaInp.setAttribute('pattern', '[0-9]*');
+  }
+}
+
+function nomeAvaliacao(idx) {
+  return (NOMES_AVALIACOES[idx - 1] || `A${idx}`).slice(0, 5);
+}
+
+function atualizarNomesAvaliacoesUI() {
+  const grid = document.getElementById('avaliacaoNomesGrid');
+  if (!grid) return;
+  let html = '';
+  for (let i = 1; i <= NUM_AVALIACOES; i++) {
+    html += `<input class="setup-input" maxlength="5" value="${escHTML(nomeAvaliacao(i))}" oninput="setNomeAvaliacao(${i}, this.value)" aria-label="Avaliação ${i}">`;
+  }
+  grid.innerHTML = html;
+}
+
+function setNomeAvaliacao(idx, valor) {
+  NOMES_AVALIACOES[idx - 1] = String(valor || `A${idx}`).trim().slice(0, 5) || `A${idx}`;
+  atualizarTela();
+  salvarDados();
+}
+
+function atualizarUIIdioma() {
+  const sel = document.getElementById('idiomaSelect');
+  if (sel) sel.value = IDIOMA_APP;
+  document.documentElement.lang = cfgIdioma().html;
+}
+
+function setIdiomaApp() {
+  const sel = document.getElementById('idiomaSelect');
+  IDIOMA_APP = IDIOMAS[sel?.value] ? sel.value : 'pt';
+  atualizarUIIdioma();
+  salvarDados();
+  document.getElementById('debug').textContent = `✅ Idioma: ${cfgIdioma().speech}`;
+}
+
+function falarGuiaConfiguracao() {
+  falarAvisoLocal('Número de avaliações. Escolher nomes. Escolher máximo e mínimo. Escolher idioma. Carregar CSV. Pronto.', 1.28);
+}
+
+function processarGuiaConfiguracao(raw) {
+  if (raw.includes('numero de avaliacoes') || raw.includes('número de avaliações')) {
+    falarAvisoLocal(`Etapa 1. Escolha de 1 a 5 avaliações por parcela. Atual: ${NUM_AVALIACOES}.`, 1.28);
+    return true;
+  }
+  if (raw.includes('escolher nomes') || raw.includes('nome das avaliacoes') || raw.includes('nomes das avaliacoes')) {
+    falarAvisoLocal('Etapa 2. Defina nomes curtos para as avaliações, com até cinco caracteres.', 1.28);
+    return true;
+  }
+  if (raw.includes('max e min') || raw.includes('min e max') || raw.includes('maximo e minimo') || raw.includes('minimo e maximo')) {
+    falarAvisoLocal(`Etapa 3. Defina mínimo e máximo. Atual: ${NOTA_MIN} a ${NOTA_MAX}.`, 1.28);
+    return true;
+  }
+  if (raw.includes('escolher idioma') || raw.includes('idioma da voz')) {
+    falarAvisoLocal(`Etapa 4. Escolha o idioma da voz. Atual: ${cfgIdioma().speech}.`, 1.28);
+    return true;
+  }
+  if (raw.includes('carregar csv') || raw.includes('subir csv')) {
+    falarAvisoLocal('Etapa 5. Carregue o CSV de parcelas.', 1.28);
+    return true;
+  }
+  if (raw.includes('pronto')) {
+    falarAvisoLocal(`Pronto. ${NUM_AVALIACOES} avaliações. Notas de ${NOTA_MIN} a ${NOTA_MAX}. Idioma ${cfgIdioma().speech}.`, 1.28);
+    return true;
+  }
+  return false;
+}
+
+function setFaixaNotas() {
+  const minInp = document.getElementById('notaMinInput');
+  const maxInp = document.getElementById('notaMaxInput');
+  let min = parseInt(minInp?.value, 10);
+  let max = parseInt(maxInp?.value, 10);
+
+  if (!Number.isInteger(min)) min = DEFAULT_NOTA_MIN;
+  if (!Number.isInteger(max)) max = DEFAULT_NOTA_MAX;
+  min = Math.max(0, min);
+  max = Math.max(0, max);
+  if (min > max) [min, max] = [max, min];
+
+  NOTA_MIN = min;
+  NOTA_MAX = max;
+  FAIXA_NOTAS_PERSONALIZADA = true;
+  atualizarUIFaixaNotas();
+  salvarDados();
+  document.getElementById('debug').textContent = `✅ ${cfgIdioma().rangeSet}: ${NOTA_MIN}-${NOTA_MAX}`;
+}
+
+function numeroPortuguesParaInteiro(texto) {
+  const unidades = {
+    zero: 0, um: 1, uma: 1, hum: 1, dois: 2, duas: 2, tres: 3, quatro: 4,
+    cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10, onze: 11,
+    doze: 12, treze: 13, catorze: 14, quatorze: 14, quinze: 15,
+    dezesseis: 16, dezaseis: 16, dezessete: 17, dezasete: 17,
+    dezoito: 18, dezenove: 19, dezanove: 19,
+    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+    eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13,
+    fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
+    nineteen: 19,
+    cero: 0, uno: 1, un: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5,
+    seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11,
+    doce: 12, trece: 13, catorce: 14, quince: 15, dieciseis: 16,
+    diecisiete: 17, dieciocho: 18, diecinueve: 19
+  };
+  const dezenas = {
+    vinte: 20, trinta: 30, quarenta: 40, cinquenta: 50, cincoenta: 50,
+    sessenta: 60, setenta: 70, oitenta: 80, noventa: 90,
+    twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60,
+    seventy: 70, eighty: 80, ninety: 90,
+    veinte: 20, treinta: 30, cuarenta: 40, cincuenta: 50, sesenta: 60,
+    setenta: 70, ochenta: 80, noventa: 90,
+    veintiuno: 21, veintidos: 22, veintitres: 23, veinticuatro: 24,
+    veinticinco: 25, veintiseis: 26, veintisiete: 27, veintiocho: 28,
+    veintinueve: 29
+  };
+  const centenas = {
+    cem: 100, cento: 100, duzentos: 200, duzentas: 200, trezentos: 300,
+    trezentas: 300, quatrocentos: 400, quatrocentas: 400, quinhentos: 500,
+    quinhentas: 500, seiscentos: 600, seiscentas: 600, setecentos: 700,
+    setecentas: 700, oitocentos: 800, oitocentas: 800, novecentos: 900,
+    novecentas: 900,
+    hundred: 100,
+    cien: 100, ciento: 100, doscientos: 200, doscientas: 200,
+    trescientos: 300, trescientas: 300, cuatrocientos: 400,
+    cuatrocientas: 400, quinientos: 500, quinientas: 500,
+    seiscientos: 600, seiscientas: 600, setecientos: 700,
+    setecientas: 700, ochocientos: 800, ochocientas: 800,
+    novecientos: 900, novecientas: 900
+  };
+
+  const palavras = normalizarTextoVoz(texto)
+    .replace(/\bparcela\b|\bplot\b/g, ' ')
+    .replace(/\bnumero\b/g, ' ')
+    .replace(/\bnumeros\b/g, ' ')
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  let total = 0;
+  let grupo = 0;
+  let viuNumero = false;
+
+  for (const p of palavras) {
+    if (p === 'e' || p === 'de' || p === 'da' || p === 'do' || p === 'and' || p === 'y') continue;
+    if (/^\d+$/.test(p)) {
+      grupo += parseInt(p, 10);
+      viuNumero = true;
+      continue;
+    }
+    if (unidades[p] !== undefined) {
+      grupo += unidades[p];
+      viuNumero = true;
+      continue;
+    }
+    if (dezenas[p] !== undefined) {
+      grupo += dezenas[p];
+      viuNumero = true;
+      continue;
+    }
+    if (p === 'hundred' && grupo > 0 && grupo < 10) {
+      grupo *= 100;
+      viuNumero = true;
+      continue;
+    }
+    if (centenas[p] !== undefined) {
+      grupo += centenas[p];
+      viuNumero = true;
+      continue;
+    }
+    if (p === 'mil' || p === 'milhar' || p === 'milhares' || p === 'thousand') {
+      total += (grupo || 1) * 1000;
+      grupo = 0;
+      viuNumero = true;
+    }
+  }
+
+  return viuNumero ? total + grupo : null;
+}
+
+function extrairNumeroParcela(raw) {
+  const palavrasParcela = cfgIdioma().commands.plotWords.join('|');
+  const reParcela = new RegExp(`^.*?\\b(${palavrasParcela})\\b`);
+  const depoisDeParcela = raw.replace(reParcela, '').trim();
+  const digitos = depoisDeParcela.match(/\b\d+\b/g);
+  const palavras = depoisDeParcela
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (digitos?.length && palavras.every(p => /^\d+$/.test(p))) {
+    return parseInt(digitos.join(''), 10);
+  }
+
+  const porExtenso = numeroPortuguesParaInteiro(depoisDeParcela);
+  if (porExtenso !== null) return porExtenso;
+
+  return digitos?.length ? parseInt(digitos.join(''), 10) : null;
+}
+
+function extrairNotaVoz(raw) {
+  if (incluiAlgum(raw, cfgIdioma().commands.plotWords)) return null;
+
+  const jotaNota = raw.match(/\bj\s*(\d{1,4})\b/);
+  if (jotaNota) return parseInt(jotaNota[1], 10);
+
+  const numero = raw.match(/\b(\d{1,4})\b/);
+  if (numero) return parseInt(numero[1], 10);
+
+  const porExtenso = numeroPortuguesParaInteiro(raw);
+  if (porExtenso !== null) return porExtenso;
+
+  const notasPorExtenso = [
+    [/\bzero\b/, 0],
+    [/\bum\b|\buma\b|\bhum\b/, 1],
+    [/\bdois\b|\bduas\b/, 2],
+    [/\btres\b/, 3],
+    [/\bquatro\b/, 4],
+    [/\bcinco\b/, 5],
+    [/\bseis\b/, 6],
+    [/\bsete\b/, 7],
+    [/\boito\b/, 8],
+    [/\bnove\b/, 9],
+    [/\bdez\b/, 10]
+  ];
+
+  for (const [re, n] of notasPorExtenso) {
+    if (re.test(raw)) return n;
+  }
+
+  return null;
+}
+
+let ultimoComandoVoz = '';
+let ultimoComandoVozMs = 0;
+const JANELA_DEDUP_VOZ_MS = 900;
+
+function receberComandoVoz(texto) {
+  const assinatura = normalizarTextoVoz(texto);
+  const agora = Date.now();
+  if (assinatura && assinatura === ultimoComandoVoz && agora - ultimoComandoVozMs < JANELA_DEDUP_VOZ_MS) {
+    return;
+  }
+  ultimoComandoVoz = assinatura;
+  ultimoComandoVozMs = agora;
+  processarComando(texto);
+}
+
+function limparDedupVoz() {
+  ultimoComandoVoz = '';
+  ultimoComandoVozMs = 0;
+}
+
+function limparComandoVozSemLiberarNota() {
+  if (ultimoComandoVoz) ultimoComandoVozMs = Date.now();
+}
+
+window.addEventListener('online', () => {
+  modoOnline = true;
+  atualizarToggleRede();
+});
+window.addEventListener('offline', () => {
+  modoOnline = false;
+  atualizarToggleRede();
+  beepOffline();
+  falarAvisoLocal(cfgIdioma().offline, 1.35);
+  setTimeout(() => {
+    if (rodando) VozEngine.parar();
+    document.getElementById('status').textContent = 'Parado';
+    document.getElementById('debug').textContent = `📴 ${cfgIdioma().offline}`;
+  }, 0);
+});
+
+window.addEventListener('pagehide', () => salvarDados());
+
+window.Capacitor?.Plugins?.App?.addListener?.('appStateChange', ({ isActive }) => {
+  if (!isActive) salvarDados();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') salvarDados();
+});
+
+function toggleRede() {
+  modoOnline = !modoOnline;
+  atualizarToggleRede();
+}
+
+function atualizarToggleRede() {
+  const btn = document.getElementById('toggleRede');
+  const lbl = document.getElementById('redeLabel');
+  if (!btn || !lbl) return;
+  btn.className = `rede-toggle ${modoOnline ? 'online' : 'offline'}`;
+  lbl.textContent = modoOnline ? 'ONLINE' : 'OFFLINE';
+}
+
+const VozEngine = {
+  async _loopNativo() {
+    const plugin = window.Capacitor.Plugins.SpeechRecognition;
+    rodando = true;
+    setStatusVoz(true);
+    document.getElementById('status').textContent = 'Ouvindo';
+
+    while (ativo) {
+      try {
+        const res = await plugin.start({
+          language: cfgIdioma().speech,
+          maxResults: 1,
+          partialResults: false,
+          popup: false
+        });
+
+        if (!ativo) break;
+        const txt = res?.matches?.[0];
+        if (txt) {
+          document.getElementById('debug').textContent = `"${txt}"`;
+          receberComandoVoz(txt.toLowerCase());
+        }
+      } catch (e) {
+        if (!ativo) break;
+        await new Promise(r => setTimeout(r, 400));
+      }
+    }
+
+    rodando = false;
+    setStatusVoz(false);
+    document.getElementById('status').textContent = 'Parado';
+  },
+
+  async iniciarNativo() {
+    const plugin = window.Capacitor?.Plugins?.SpeechRecognition;
+    if (!plugin) {
+      document.getElementById('debug').textContent = '❌ Plugin não encontrado';
+      return;
+    }
+
+    const perm = await plugin.checkPermissions();
+    if (perm.speechRecognition !== 'granted') {
+      const req = await plugin.requestPermissions();
+      if (req.speechRecognition !== 'granted') {
+        document.getElementById('debug').textContent = '❌ Permissão negada';
+        beepErro();
+        return;
+      }
+    }
+
+    limparDedupVoz();
+    ativo = true;
+    this._loopNativo();
+  },
+
+  pararNativo() {
+    ativo = false;
+    limparDedupVoz();
+    window.Capacitor?.Plugins?.SpeechRecognition?.stop().catch(() => {});
+  },
+
+  _webRec: null,
+
+  iniciarWeb() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      alert('Navegador sem suporte a voz');
+      return;
+    }
+
+    this._webRec = new SR();
+    this._webRec.lang = cfgIdioma().speech;
+    this._webRec.continuous = true;
+    ativo = true;
+    limparDedupVoz();
+
+    this._webRec.onstart = () => {
+      rodando = true;
+      setStatusVoz(true);
+      document.getElementById('status').textContent = 'Ouvindo';
+    };
+    this._webRec.onerror = (e) => {
+      if (e.error === 'not-allowed') {
+        ativo = false;
+        rodando = false;
+        setStatusVoz(false);
+        document.getElementById('status').textContent = 'Parado';
+      }
+    };
+    this._webRec.onresult = (e) => {
+      const txt = e.results[e.results.length - 1][0].transcript.toLowerCase();
+      document.getElementById('debug').textContent = `"${txt}"`;
+      receberComandoVoz(txt);
+    };
+    this._webRec.onend = () => {
+      rodando = false;
+      if (ativo) {
+        try { this._webRec.start(); } catch (e) {}
+      }
+    };
+    this._webRec.start();
+  },
+
+  pararWeb() {
+    ativo = false;
+    limparDedupVoz();
+    if (this._webRec) this._webRec.stop();
+    rodando = false;
+  },
+
+  iniciar() {
+    if (rodando) return;
+    if (!dados.length) {
+      beepErro();
+      document.getElementById('debug').textContent = '⚠️ Carregue um CSV primeiro';
+      return;
+    }
+    if (!modoOnline) {
+      document.getElementById('debug').textContent = '📴 Offline: use o teclado manual';
+      document.getElementById('status').textContent = 'Parado';
+      setStatusVoz(false);
+      if (document.getElementById('manualCard').style.display === 'none') toggleManual();
+      return;
+    }
+    if (isNative()) this.iniciarNativo();
+    else this.iniciarWeb();
+  },
+
+  parar() {
+    if (isNative()) this.pararNativo();
+    else this.pararWeb();
+    setStatusVoz(false);
+    document.getElementById('status').textContent = 'Parado';
+  }
+};
+
+function processarComando(texto) {
+  const raw = normalizarTextoVoz(texto);
+  const comandos = cfgIdioma().commands;
+
+  if (processarGuiaConfiguracao(raw)) return;
+
+  if (modoDescricao) {
+    modoDescricao = false;
+    if (dados.length && current < dados.length) {
+      dados[current].descricao = texto.trim();
+      salvarDados();
+      atualizarDisplayDescricao();
+      document.getElementById('debug').textContent = `📝 "${texto.trim()}"`;
+      beepNota();
+    }
+    return;
+  }
+
+  if (incluiAlgum(raw, comandos.description)) {
+    if (!dados.length || current >= dados.length) {
+      beepErro();
+      return;
+    }
+    modoDescricao = true;
+    limparDedupVoz();
+    document.getElementById('debug').textContent = '📝 Aguardando descrição...';
+    vibrar([40, 60, 40]);
+    return;
+  }
+
+  if (
+    incluiAlgum(raw, comandos.currentPlot)
+  ) {
+    falarParcelaAtual();
+    return;
+  }
+  if (incluiAlgum(raw, comandos.skipPlot)) {
+    pularParcela();
+    return;
+  }
+  if (incluiAlgum(raw, comandos.next)) {
+    proximaNota();
+    return;
+  }
+  if (incluiAlgum(raw, comandos.back)) {
+    voltarNota();
+    return;
+  }
+  if (incluiAlgum(raw, comandos.plotWords)) {
+    const numeroParcela = extrairNumeroParcela(raw);
+    if (numeroParcela !== null) {
+      irParaParcelaComVoz(numeroParcela);
+      return;
+    }
+  }
+
+  const nota = extrairNotaVoz(raw);
+  if (nota !== null) {
+    salvarNota(nota);
+    return;
+  }
+}
+
+async function solicitarPermissao() {
+  if (!isNative()) {
+    document.getElementById('debug').textContent = '⚠️ Apenas necessário no app nativo';
+    return;
+  }
+
+  const plugin = window.Capacitor?.Plugins?.SpeechRecognition;
+  if (!plugin) return;
+  const r = await plugin.requestPermissions();
+  document.getElementById('debug').textContent =
+    r.speechRecognition === 'granted' ? '✅ Permissão concedida!' : '❌ Permissão negada';
+  if (r.speechRecognition !== 'granted') beepErro();
+}
+
+const STORAGE_KEY = 'fieldVoiceAuto';
+
+function estadoPersistente() {
+  return {
+    dados,
+    current,
+    colunaAtual,
+    nomeCSV,
+    paginaAtual,
+    numAvaliacoes: NUM_AVALIACOES,
+    nomesAvaliacoes: NOMES_AVALIACOES,
+    notaMin: NOTA_MIN,
+    notaMax: NOTA_MAX,
+    faixaNotasPersonalizada: FAIXA_NOTAS_PERSONALIZADA,
+    idioma: IDIOMA_APP,
+    savedAt: Date.now()
+  };
+}
+
+function pluginPreferencias() {
+  return window.Capacitor?.Plugins?.Preferences || window.Capacitor?.Plugins?.Storage;
+}
+
+function abrirBancoPersistente() {
+  if (!window.indexedDB) return Promise.resolve(null);
+  return new Promise(resolve => {
+    const req = indexedDB.open('FieldVoiceDB', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('estado');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
+  });
+}
+
+async function salvarIndexedDB(serializado) {
+  const db = await abrirBancoPersistente();
+  if (!db) return;
+  await new Promise(resolve => {
+    const tx = db.transaction('estado', 'readwrite');
+    tx.objectStore('estado').put(serializado, STORAGE_KEY);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); resolve(); };
+    tx.onabort = () => { db.close(); resolve(); };
+  });
+}
+
+async function carregarIndexedDB() {
+  const db = await abrirBancoPersistente();
+  if (!db) return null;
+  return new Promise(resolve => {
+    const tx = db.transaction('estado', 'readonly');
+    const req = tx.objectStore('estado').get(STORAGE_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+    tx.oncomplete = () => db.close();
+    tx.onerror = () => db.close();
+  });
+}
+
+async function removerIndexedDB() {
+  const db = await abrirBancoPersistente();
+  if (!db) return;
+  await new Promise(resolve => {
+    const tx = db.transaction('estado', 'readwrite');
+    tx.objectStore('estado').delete(STORAGE_KEY);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); resolve(); };
+    tx.onabort = () => { db.close(); resolve(); };
+  });
+}
+
+function salvarDados() {
+  const serializado = JSON.stringify(estadoPersistente());
+  try {
+    localStorage.setItem(STORAGE_KEY, serializado);
+  } catch (e) {}
+
+  salvarIndexedDB(serializado).catch(() => {});
+
+  const prefs = pluginPreferencias();
+  if (prefs?.set) {
+    prefs.set({ key: STORAGE_KEY, value: serializado }).catch(() => {});
+  }
+}
+
+async function carregarEstadoPersistente() {
+  const candidatos = [];
+  const prefs = pluginPreferencias();
+  if (prefs?.get) {
+    try {
+      const r = await prefs.get({ key: STORAGE_KEY });
+      if (r?.value) candidatos.push(r.value);
+    } catch (e) {}
+  }
+
+  const indexed = await carregarIndexedDB();
+  if (indexed) candidatos.push(indexed);
+
+  try {
+    const local = localStorage.getItem(STORAGE_KEY);
+    if (local) candidatos.push(local);
+  } catch (e) {}
+
+  let maisRecente = null;
+  let maiorData = -1;
+  for (const serializado of candidatos) {
+    try {
+      const estado = JSON.parse(serializado);
+      const data = Number.isFinite(estado.savedAt) ? estado.savedAt : 0;
+      if (data > maiorData) {
+        maiorData = data;
+        maisRecente = serializado;
+      }
+    } catch (e) {}
+  }
+  return maisRecente;
+}
+
+async function carregarDados() {
+  const s = await carregarEstadoPersistente();
+  if (!s) return false;
+  try {
+    const e = JSON.parse(s);
+    const temNotaMinMax = Number.isInteger(e.notaMin) && Number.isInteger(e.notaMax);
+    const faixaAntigaPadrao = e.notaMin === 0 && e.notaMax === 10 && e.faixaNotasPersonalizada !== true;
+    if (temNotaMinMax && !faixaAntigaPadrao) {
+      NOTA_MIN = e.notaMin;
+      NOTA_MAX = e.notaMax;
+      FAIXA_NOTAS_PERSONALIZADA = e.faixaNotasPersonalizada === true ||
+        e.notaMin !== DEFAULT_NOTA_MIN ||
+        e.notaMax !== DEFAULT_NOTA_MAX;
+    } else {
+      NOTA_MIN = DEFAULT_NOTA_MIN;
+      NOTA_MAX = DEFAULT_NOTA_MAX;
+      FAIXA_NOTAS_PERSONALIZADA = false;
+    }
+    if (Array.isArray(e.nomesAvaliacoes)) {
+      NOMES_AVALIACOES = [1, 2, 3, 4, 5].map(i => String(e.nomesAvaliacoes[i - 1] || `A${i}`).slice(0, 5));
+    }
+    if (IDIOMAS[e.idioma]) IDIOMA_APP = e.idioma;
+    if (NOTA_MIN > NOTA_MAX) [NOTA_MIN, NOTA_MAX] = [NOTA_MAX, NOTA_MIN];
+    atualizarUIIdioma();
+    atualizarUIFaixaNotas();
+
+    if (e.dados?.length) {
+      dados = e.dados;
+      current = e.current;
+      colunaAtual = e.colunaAtual || 1;
+      nomeCSV = e.nomeCSV || '';
+      paginaAtual = e.paginaAtual || 1;
+      if (e.numAvaliacoes) NUM_AVALIACOES = e.numAvaliacoes;
+      document.querySelectorAll('.seg-btn').forEach((b, i) => {
+        b.classList.toggle('ativo', i + 1 === NUM_AVALIACOES);
+      });
+      atualizarNomesAvaliacoesUI();
+      atualizarTela();
+      document.getElementById('debug').textContent = '✅ Dados recuperados!';
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+function resetarExperimento() {
+  if (!confirm('⚠️ Apagar todos os dados?')) return;
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  removerIndexedDB().catch(() => {});
+  const prefs = pluginPreferencias();
+  if (prefs?.remove) prefs.remove({ key: STORAGE_KEY }).catch(() => {});
+  dados = [];
+  current = 0;
+  colunaAtual = 1;
+  nomeCSV = '';
+  paginaAtual = 1;
+  modoDescricao = false;
+  NOTA_MIN = DEFAULT_NOTA_MIN;
+  NOTA_MAX = DEFAULT_NOTA_MAX;
+  FAIXA_NOTAS_PERSONALIZADA = false;
+  atualizarUIFaixaNotas();
+  limparDedupVoz();
+  VozEngine.parar();
+  document.getElementById('fileLabel').textContent = 'plot_id · genotipo · testemunha';
+  document.getElementById('notaDigitada').value = '';
+  atualizarTela();
+  document.getElementById('debug').textContent = '🔄 Reiniciado!';
+  garantirFocoDigitacao();
+}
+
+function scrollParaParcelaAtual() {
+  const d = document.getElementById('scrollContainer');
+  if (!d) return;
+  for (const row of d.querySelectorAll('tbody tr')) {
+    if (row.classList.contains('linha-atual')) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    }
+  }
+}
+
+function irParaCelula(idx, col) {
+  if (idx < 0 || idx >= dados.length || col < 1 || col > NUM_AVALIACOES) return;
+  current = idx;
+  colunaAtual = col;
+  limparDedupVoz();
+  atualizarTela();
+  salvarDados();
+  beepNavegacao();
+  garantirFocoDigitacao();
+}
+
+function atualizarGrid() {
+  const gridLabel = document.getElementById('gridLabel');
+  if (!dados.length) {
+    document.getElementById('gridContainer').style.display = 'none';
+    gridLabel.style.display = 'none';
+    return;
+  }
+
+  document.getElementById('gridContainer').style.display = 'block';
+  gridLabel.style.display = 'block';
+
+  let hdr = '<tr><th>Parcela</th>';
+  for (let i = 1; i <= NUM_AVALIACOES; i++) hdr += `<th>${escHTML(nomeAvaliacao(i))}</th>`;
+  hdr += '</tr>';
+  document.getElementById('gridHeader').innerHTML = hdr;
+
+  const total = Math.ceil(dados.length / POR_PAGINA);
+  const ini = (paginaAtual - 1) * POR_PAGINA;
+  const fim = Math.min(ini + POR_PAGINA, dados.length);
+  const pag = dados.slice(ini, fim);
+
+  let pagHtml = '';
+  if (paginaAtual > 1) pagHtml += `<button onclick="mudarPagina(${paginaAtual - 1})">◀ Anterior</button>`;
+  pagHtml += `<span>${paginaAtual} / ${total}</span>`;
+  if (paginaAtual < total) pagHtml += `<button onclick="mudarPagina(${paginaAtual + 1})">Próxima ▶</button>`;
+  document.getElementById('paginacao').innerHTML = pagHtml;
+
+  let html = '';
+  for (let i = 0; i < pag.length; i++) {
+    const p = pag[i];
+    const g = ini + i;
+    html += `<tr class="${g === current ? 'linha-atual' : ''} ${p.testemunha ? 'testemunha' : ''}">`;
+    html += `<td>${escHTML(String(p.plot_id))}${p.testemunha ? ' 🔹' : ''}</td>`;
+    for (let j = 1; j <= NUM_AVALIACOES; j++) {
+      const v = p[`nota${j}`] !== null ? p[`nota${j}`] : '-';
+      const cls = (g === current && colunaAtual === j) ? 'coluna-ativa' : '';
+      html += `<td class="${cls}" onclick="irParaCelula(${g},${j})">${v}</td>`;
+    }
+    html += '</tr>';
+  }
+  document.getElementById('gridBody').innerHTML = html;
+  setTimeout(() => scrollParaParcelaAtual(), 50);
+}
+
+function mudarPagina(p) {
+  paginaAtual = p;
+  atualizarGrid();
+  salvarDados();
+  garantirFocoDigitacao();
+}
+
+function escHTML(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function atualizarDisplayNotas() {
+  const c = document.getElementById('notasDisplay');
+  if (!dados.length || current >= dados.length) {
+    c.innerHTML = '';
+    return;
+  }
+
+  const p = dados[current];
+  let html = '';
+  for (let i = 1; i <= NUM_AVALIACOES; i++) {
+    const nota = p[`nota${i}`];
+    const val = nota !== null ? nota : '○';
+    const cls = i === colunaAtual ? 'active' : (nota !== null ? 'filled' : '');
+    html += `<div class="nota-individual">
+      <div class="label">${escHTML(nomeAvaliacao(i))}</div>
+      <div class="valor ${cls}" id="nota${i}Atual">${val}</div>
+    </div>`;
+  }
+  c.innerHTML = html;
+}
+
+function atualizarTela() {
+  if (!dados.length) {
+    document.getElementById('plot').textContent = '📋 Nenhum CSV carregado';
+    document.getElementById('notasDisplay').innerHTML = '';
+    document.getElementById('gridContainer').style.display = 'none';
+    document.getElementById('gridLabel').style.display = 'none';
+    atualizarDisplayDescricao();
+    return;
+  }
+
+  if (current < dados.length) {
+    const p = dados[current];
+    document.getElementById('plot').innerHTML =
+      `<span class="plot-parcela">🌿 Parcela <strong>${escHTML(String(p.plot_id))}</strong>${p.testemunha ? ' <span class="plot-badge">● Testemunha</span>' : ''}</span><span class="plot-genotipo">${escHTML(p.genotipo)}</span>`;
+    atualizarDisplayNotas();
+    atualizarDisplayDescricao();
+    const pc = Math.floor(current / POR_PAGINA) + 1;
+    if (pc !== paginaAtual) paginaAtual = pc;
+    atualizarGrid();
+  } else {
+    document.getElementById('plot').innerHTML = '🏁 <strong>Coleta finalizada!</strong>';
+    document.getElementById('notasDisplay').innerHTML = '<div style="font-size:2rem;margin-top:8px;">🎉</div>';
+    atualizarDisplayDescricao();
+    atualizarGrid();
+  }
+
+  garantirFocoDigitacao();
+}
+
+function atualizarDisplayDescricao() {
+  const card = document.getElementById('descricaoCard');
+  const txt = document.getElementById('descricaoTexto');
+  if (!card || !txt) return;
+  const desc = (dados.length && current < dados.length) ? (dados[current].descricao || '') : '';
+  txt.textContent = desc;
+  card.style.display = desc ? 'flex' : 'none';
+}
+
+function limparDescricao() {
+  if (!dados.length || current >= dados.length) return;
+  dados[current].descricao = '';
+  salvarDados();
+  atualizarDisplayDescricao();
+}
+
+function garantirFocoDigitacao() {
+  const card = document.getElementById('manualCard');
+  if (card && card.style.display !== 'none') return;
+  fecharManual();
+}
+
+function proximaNota() {
+  if (!dados.length) return;
+  limparComandoVozSemLiberarNota();
+  if (colunaAtual < NUM_AVALIACOES) {
+    colunaAtual++;
+  } else if (current + 1 < dados.length) {
+    current++;
+    colunaAtual = 1;
+    if (dados[current].testemunha) setTimeout(() => beepTestemunha(), 100);
+    setTimeout(() => falarParcelaSeNecessario(), 150);
+  } else {
+    beepErro();
+    return;
+  }
+  beepNavegacao();
+  atualizarTela();
+  salvarDados();
+}
+
+function voltarNota() {
+  if (!dados.length) return;
+  limparComandoVozSemLiberarNota();
+  if (colunaAtual > 1) {
+    colunaAtual--;
+  } else if (current > 0) {
+    current--;
+    colunaAtual = NUM_AVALIACOES;
+  } else {
+    beepErro();
+    return;
+  }
+  beepNavegacao();
+  atualizarTela();
+  salvarDados();
+}
+
+function pularParcela() {
+  if (!dados.length) return;
+  limparComandoVozSemLiberarNota();
+  if (current + 1 < dados.length) {
+    current++;
+    colunaAtual = 1;
+    beepNavegacao();
+    if (dados[current].testemunha) setTimeout(() => beepTestemunha(), 200);
+    setTimeout(() => falarParcelaSeNecessario(), 150);
+    atualizarTela();
+    salvarDados();
+  } else {
+    beepErro();
+  }
+}
+
+function irParaParcelaComVoz(numero) {
+  const idx = dados.findIndex(d => d.plot_id === numero);
+  if (idx >= 0) {
+    current = idx;
+    atualizarColunaAtual();
+    limparComandoVozSemLiberarNota();
+    atualizarTela();
+    salvarDados();
+    beepNavegacao();
+    falarTexto(`${cfgIdioma().confirm} ${fraseParcelaAtual(true)}`, 1.28);
+  } else {
+    beepErro();
+    falarTexto(cfgIdioma().notFound(numero), 1.28);
+  }
+}
+
+function salvarNota(numero) {
+  if (!dados.length || current >= dados.length) {
+    beepErro();
     return false;
   }
 
-  function resetarExperimento() {
-    if (confirm("⚠️ Tem certeza? Isso vai apagar TODOS os dados atuais.")) {
-      localStorage.removeItem('fieldVoiceData');
-      dados = [];
-      current = 0;
-      paginaAtual = 1;
-      nomeCSVOriginal = '';
-      if (recognition) try { recognition.stop(); } catch(e) {}
-      ativo = false;
-      rodando = false;
-      document.getElementById("status").innerHTML = "⏹️ Parado";
-      document.getElementById('fileInput').value = '';
-      atualizarTela();
-      document.getElementById("debug").innerHTML = "🔄 Experimento reiniciado! Carregue um novo CSV.";
-      falar("Experimento reiniciado");
-      document.getElementById("notaManualInput").focus();
-    }
+  const nota = parseInt(numero, 10);
+  if (!Number.isInteger(nota) || nota < NOTA_MIN || nota > NOTA_MAX) {
+    beepErro();
+    falarAvisoLocal(cfgIdioma().invalid, 1.35);
+    document.getElementById('debug').textContent = `❌ Nota não válida: ${numero} · faixa ${NOTA_MIN}-${NOTA_MAX}`;
+    return false;
   }
 
-  function atualizarTabelaResultados() {
-    if (!dados.length) {
-      document.getElementById("resultadosContainer").style.display = 'none';
-      return;
-    }
-    document.getElementById("resultadosContainer").style.display = 'block';
-    
-    let avaliadas = dados.filter(d => d.nota !== null);
-    let percentual = Math.round((avaliadas.length/dados.length)*100);
-    document.getElementById("progressoTexto").innerHTML = 📊 ${avaliadas.length}/${dados.length} (${percentual}%);
-    
-    let totalPaginas = Math.ceil(dados.length / ITENS_POR_PAGINA);
-    let inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-    let fim = Math.min(inicio + ITENS_POR_PAGINA, dados.length);
-    let parcelasPagina = dados.slice(inicio, fim);
-    
-    let botoesHtml = '';
-    if (paginaAtual > 1) botoesHtml += <button onclick="mudarPagina(${paginaAtual - 1})">◀️ Anterior</button>;
-    botoesHtml += <span style="margin:0 12px; font-weight:bold;">${paginaAtual} / ${totalPaginas}</span>;
-    if (paginaAtual < totalPaginas) botoesHtml += <button onclick="mudarPagina(${paginaAtual + 1})">Próxima ▶️</button>;
-    document.getElementById("paginaBotoesBottom").innerHTML = botoesHtml;
-    
-    let html = '';
-    for (let p of parcelasPagina) {
-      let classe = '';
-      let status = '';
-      let notaShow = p.nota !== null ? <span style="font-weight:bold; color:#2c5e2f;">${p.nota}</span> : '—';
-      if (p.nota !== null) { classe = 'avaliada'; status = '✅'; }
-      if (p.testemunha) { classe += ' testemunha'; status = '🔹'; }
-      if (current < dados.length && dados[current].plot_id === p.plot_id) { classe += ' parcela-atual'; status = '⭐'; }
-      if (p.nota === null && !p.testemunha && (current >= dados.length || dados[current].plot_id !== p.plot_id)) status = '⏳';
-      if (p.nota === null && p.testemunha && (current >= dados.length || dados[current].plot_id !== p.plot_id)) status = '🔹⏳';
-      
-      html += `<tr class="${classe}" onclick="irParaParcela(${p.plot_id})">
-                  <td><strong>${p.plot_id}</strong></td>
-                  <td>${p.genotipo.substring(0, 8)}</td>
-                  <td>${notaShow}</td>
-                  <td>${status}</td>
-                </tr>`;
-    }
-    document.getElementById("corpoTabela").innerHTML = html;
-    
-    let idxAtual = dados.findIndex(d => d.plot_id === dados[current]?.plot_id);
-    if (idxAtual >= inicio && idxAtual < fim) {
-      setTimeout(() => {
-        let rows = document.getElementById("scrollContainer").querySelectorAll('tr');
-        for (let i = 0; i < rows.length; i++) {
-          if (rows[i].innerHTML.includes(>${dados[current].plot_id}<)) {
-            rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            break;
-          }
-        }
-      }, 80);
-    }
+  const key = `nota${colunaAtual}`;
+  const isCorrecao = dados[current][key] !== null;
+  dados[current][key] = nota;
+
+  if (isCorrecao) {
+    beepCorrecao();
+    document.getElementById('debug').textContent = `✏️ Corrigido A${colunaAtual} = ${nota}`;
+  } else {
+    beepNota();
   }
 
-  function mudarPagina(novaPagina) {
-    paginaAtual = novaPagina;
-    atualizarTabelaResultados();
-    salvarDados();
+  const el = document.getElementById(`nota${colunaAtual}Atual`);
+  if (el) {
+    el.classList.remove('nota-pop');
+    void el.offsetWidth;
+    el.classList.add('nota-pop');
   }
 
-  function atualizarTela() {
-    if (!dados.length) {
-      document.getElementById("plot").innerHTML = "📂 Carregue CSV";
-      document.getElementById("notaAtual").innerText = "-";
-      document.getElementById("resultadosContainer").style.display = 'none';
-      return;
-    }
-    if (current < dados.length) {
-      let d = dados[current];
-      let notaExibida = d.nota !== null ? d.nota : "⭕";
-      let testemunhaTag = d.testemunha ? " 🔹 TESTEMUNHA" : "";
-      document.getElementById("plot").innerHTML = 🌿 Parcela ${d.plot_id} | ${d.genotipo}${testemunhaTag};
-      document.getElementById("notaAtual").innerHTML = ${notaExibida};
-      
-      let indice = dados.findIndex(p => p.plot_id === d.plot_id);
-      let paginaCorreta = Math.floor(indice / ITENS_POR_PAGINA) + 1;
-      if (paginaCorreta !== paginaAtual) paginaAtual = paginaCorreta;
-      atualizarTabelaResultados();
-    } else {
-      document.getElementById("plot").innerHTML = "🏁 COLETA FINALIZADA!";
-      document.getElementById("notaAtual").innerHTML = "🎉";
-      atualizarTabelaResultados();
-    }
-  }
-
-  function configurarInputManual() {
-    let input = document.getElementById('notaManualInput');
-    input.addEventListener('input', function(e) {
-      let nota = parseInt(e.target.value);
-      if (isNaN(nota)) { 
-        e.target.value = ''; 
-        return; 
-      }
-      if (nota < 1 || nota > 9) {
-        notaInvalida();
-        falar(${nota} inválido);
-        e.target.value = '';
-        return;
-      }
-      if (dados.length && current < dados.length) salvarNota(nota);
-      else if (!dados.length) falar("Carregue CSV");
-      e.target.value = '';
-      setTimeout(() => e.target.focus(), 50);
-    });
-  }
-
-  function salvarNota(nota) {
-    if (!dados.length || current >= dados.length) return;
-    let notaValida = Math.min(9, Math.max(1, parseInt(nota)));
-    dados[current].nota = notaValida;
-    
-    let parcelaAtualNum = dados[current].plot_id;
-    let terminaZero = (parcelaAtualNum % 10 === 0);
-    
-    falar(${notaValida});
-    if (terminaZero) {
-      let prox = dados[current + 1]?.plot_id || parcelaAtualNum;
-      setTimeout(() => falar(vira, próxima ${prox}), 400);
-    }
-    
+  const foiUltima = colunaAtual === NUM_AVALIACOES;
+  if (foiUltima) {
+    beepParcelaCompleta();
     if (current + 1 < dados.length) {
       current++;
-      setTimeout(() => {
-        if (dados[current]?.testemunha) falar(testemunha, parcela ${dados[current].plot_id});
-      }, 800);
-      atualizarTela();
+      colunaAtual = 1;
+      if (dados[current].plot_id % 10 === 0) beepVira();
+      if (dados[current].testemunha) setTimeout(() => beepTestemunha(), 200);
+      setTimeout(() => falarParcelaSeNecessario(), 350);
     } else {
-      current++;
       atualizarTela();
-      falar("Coleta finalizada!");
+      salvarDados();
+      return true;
     }
-    salvarDados();
+  } else {
+    colunaAtual++;
   }
 
-  function pularParcela() {
-    if (!dados.length || current >= dados.length) return;
-    let antiga = dados[current].plot_id;
-    let terminaZero = (antiga % 10 === 0);
-    if (current + 1 < dados.length) {
-      current++;
-      if (terminaZero) setTimeout(() => falar(vira, próxima ${dados[current].plot_id}), 250);
-      atualizarTela();
-      falar("pulado");
-    } else { current++; atualizarTela(); falar("fim"); }
-    salvarDados();
-  }
+  atualizarTela();
+  salvarDados();
+  return true;
+}
 
-  function voltarParcela() {
-    if (!dados.length) return;
-    if (current > 0) { current--; atualizarTela(); falar("voltou"); salvarDados(); }
-    else falar("primeira");
-  }
+function carregarCSV() {
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) return;
 
-  function corrigirNota(val) {
-    if (!dados.length || current >= dados.length) return;
-    let num = Math.min(9, Math.max(1, parseInt(val)));
-    dados[current].nota = num;
+  nomeCSV = file.name.replace(/\.csv$/i, '');
+  document.getElementById('fileLabel').textContent = file.name;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const linhas = e.target.result.split(/\r?\n/);
+    const temHeader = linhas[0]?.toLowerCase().includes('plot_id');
+    const header = temHeader ? parseCSVLine(linhas[0]).map(h => h.trim()) : [];
+    const headerLower = header.map(h => normalizarTextoVoz(h));
+    const start = temHeader ? 1 : 0;
+    const idxPlot = Math.max(0, headerLower.indexOf('plot_id'));
+    const idxGen = headerLower.indexOf('genotipo') >= 0 ? headerLower.indexOf('genotipo') : 1;
+    const idxTest = headerLower.indexOf('testemunha');
+    const idxDesc = headerLower.indexOf('descricao');
+    const notaIdxs = [];
+
+    if (temHeader) {
+      const inicioNotas = idxTest >= 0 ? idxTest + 1 : 3;
+      const fimNotas = idxDesc >= 0 ? idxDesc : header.length;
+      const nomesNoArquivo = header.slice(inicioNotas, fimNotas).filter(Boolean).slice(0, 5);
+      if (nomesNoArquivo.length) {
+        NUM_AVALIACOES = nomesNoArquivo.length;
+        NOMES_AVALIACOES = [1, 2, 3, 4, 5].map(i => String(nomesNoArquivo[i - 1] || `A${i}`).trim().slice(0, 5) || `A${i}`);
+        document.querySelectorAll('.seg-btn').forEach((b, i) => {
+          b.classList.toggle('ativo', i + 1 === NUM_AVALIACOES);
+        });
+        atualizarNomesAvaliacoesUI();
+      }
+
+      for (let j = 1; j <= NUM_AVALIACOES; j++) {
+        const candidatos = [
+          normalizarTextoVoz(nomeAvaliacao(j)),
+          `avaliacao${j}`,
+          `nota${j}`,
+          `a${j}`
+        ];
+        const idx = headerLower.findIndex(h => candidatos.includes(h));
+        notaIdxs[j] = idx;
+      }
+    }
+
+    const novos = [];
+
+    for (let i = start; i < linhas.length; i++) {
+      const l = linhas[i].trim();
+      if (!l) continue;
+      const cols = parseCSVLine(l);
+      if (cols.length < 2) continue;
+
+      const plot_id = parseInt(cols[idxPlot] ?? cols[0], 10);
+      if (Number.isNaN(plot_id)) continue;
+
+      const genotipo = (cols[idxGen] ?? cols[1] ?? '').trim();
+      const testemunha = idxTest >= 0
+        ? (cols[idxTest].trim().toLowerCase() === 'sim' || cols[idxTest].trim() === '1' || cols[idxTest].trim().toLowerCase() === 'yes')
+        : false;
+      const novo = { plot_id, genotipo, testemunha };
+      for (let j = 1; j <= NUM_AVALIACOES; j++) {
+        const idxNota = notaIdxs[j];
+        const rawNota = idxNota >= 0 ? String(cols[idxNota] ?? '').trim() : '';
+        const nota = rawNota === '' ? null : parseFloat(rawNota.replace(',', '.'));
+        novo[`nota${j}`] = Number.isFinite(nota) ? nota : null;
+      }
+      novo.descricao = idxDesc >= 0 ? (cols[idxDesc] || '') : '';
+      novos.push(novo);
+    }
+
+    if (!novos.length) {
+      alert('CSV inválido ou sem dados');
+      return;
+    }
+
+    dados = novos;
+    current = 0;
+    colunaAtual = 1;
+    paginaAtual = 1;
+    limparDedupVoz();
     atualizarTela();
-    falar(corrigido ${num});
+    beepNota();
+    document.getElementById('debug').textContent = `✅ ${dados.length} parcelas · ${NUM_AVALIACOES} avaliações`;
     salvarDados();
-  }
-
-  function irParaParcela(id) {
-    let idx = dados.findIndex(d => d.plot_id === id);
-    if (idx >= 0) {
-      current = idx;
-      atualizarTela();
-      falar(parcela ${id}, nota ${dados[current].nota ?? "sem nota"});
-      salvarDados();
-    } else falar(parcela ${id} não encontrada);
-  }
-
-  function carregarCSV() {
-    const file = document.getElementById('fileInput').files[0];
-    if (!file) { alert("Selecione um CSV: plot_id,genotipo,testemunha"); return; }
-    
-    nomeCSVOriginal = file.name.replace(/\.csv$/i, '');
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      let linhas = e.target.result.split(/\r?\n/);
-      let startRow = linhas[0].toLowerCase().includes('plot_id') ? 1 : 0;
-      let novos = [];
-      for (let i = startRow; i < linhas.length; i++) {
-        let linha = linhas[i].trim();
-        if (!linha) continue;
-        let cols = linha.includes(',') ? linha.split(',') : (linha.includes(';') ? linha.split(';') : linha.split(/\t/));
-        if (cols.length < 2) continue;
-        let plot_id = parseInt(cols[0]);
-        let genotipo = cols[1].trim();
-        let testemunha = false;
-        if (cols.length >= 3) testemunha = (cols[2].trim().toLowerCase() === 'sim' || cols[2].trim() === '1');
-        if (!isNaN(plot_id)) novos.push({ plot_id, genotipo, nota: null, testemunha });
-      }
-      if (!novos.length) { alert("CSV inválido. Use: plot_id,genotipo,testemunha"); return; }
-      dados = novos;
-      current = 0;
-      paginaAtual = 1;
-      atualizarTela();
-      falar(${dados.length} parcelas carregadas);
-      document.getElementById("debug").innerHTML = ✅ ${dados.length} parcelas. Dados serão salvos automaticamente!;
-      salvarDados();
-    };
-    reader.readAsText(file, "UTF-8");
-  }
-
-  function exportarCSV() {
-    if (!dados.length) { alert("Nenhum dado para exportar"); return; }
-    
-    let csv = "plot_id,genotipo,testemunha,nota\n" + dados.map(d => ${d.plot_id},${d.genotipo},${d.testemunha?"sim":""},${d.nota??""}).join("\n");
-    
-    let nomeBase = nomeCSVOriginal;
-    if (!nomeBase) {
-      let fileInput = document.getElementById('fileInput');
-      if (fileInput.files && fileInput.files[0]) nomeBase = fileInput.files[0].name.replace(/\.csv$/i, '');
-      else nomeBase = 'resultado';
-    }
-    
-    let agora = new Date();
-    let ano = agora.getFullYear().toString().slice(-2);
-    let mes = (agora.getMonth()+1).toString().padStart(2,'0');
-    let dia = agora.getDate().toString().padStart(2,'0');
-    let hora = agora.getHours().toString().padStart(2,'0');
-    let minuto = agora.getMinutes().toString().padStart(2,'0');
-    let timestamp = ${ano}${mes}${dia}_${hora}${minuto};
-    let nomeSugerido = ${nomeBase}_${timestamp}.csv;
-    
-    let modal = document.createElement('div');
-    modal.style.cssText = position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:1000;;
-    
-    let modalContent = document.createElement('div');
-    modalContent.style.cssText = background:#fff8e8; border-radius:32px; padding:24px; max-width:90%; width:320px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.3);;
-    
-    modalContent.innerHTML = `
-      <h3 style="margin:0 0 10px 0; color:#1e3a1e;">💾 Nome do arquivo</h3>
-      <p style="font-size:0.7rem; color:#6b5b3a;">Timestamp: ${timestamp}</p>
-      <input type="text" id="nomeArquivoInput" value="${nomeSugerido}" style="width:100%; padding:10px; border:2px solid #c0b28a; border-radius:28px; font-size:0.9rem; margin:15px 0; text-align:center;">
-      <div style="display:flex; gap:10px; justify-content:center;">
-        <button id="confirmarExport" style="background:#2c5e2f; padding:8px 20px; border:none; border-radius:40px; color:white; font-weight:bold;">✅ Salvar</button>
-        <button id="cancelarExport" style="background:#9e3c2c; padding:8px 20px; border:none; border-radius:40px; color:white; font-weight:bold;">❌ Cancelar</button>
-      </div>
-    `;
-    
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-    
-    document.getElementById('confirmarExport').onclick = () => {
-      let nomeFinal = document.getElementById('nomeArquivoInput').value.trim();
-      if (!nomeFinal) nomeFinal = nomeSugerido;
-      if (!nomeFinal.endsWith('.csv')) nomeFinal += '.csv';
-      
-      let blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-      let link = document.createElement("a");
-      let url = URL.createObjectURL(blob);
-      link.href = url;
-      link.download = nomeFinal;
-      link.click();
-      URL.revokeObjectURL(url);
-      document.body.removeChild(modal);
-      falar("Exportado");
-    };
-    
-    document.getElementById('cancelarExport').onclick = () => {
-      document.body.removeChild(modal);
-      falar("Cancelado");
-    };
-  }
-
-  // ========== RECONHECIMENTO DE VOZ - VERSÃO SEM LOOP ==========
-  function startRecognition() {
-    if (rodando) { 
-      falar("já ativo"); 
-      return; 
-    }
-    if (!dados.length) { 
-      falar("Carregue CSV"); 
-      return; 
-    }
-    
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { 
-      alert("Navegador sem suporte a voz"); 
-      return; 
-    }
-    
-    recognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.continuous = true;   // Mantém o microfone sempre aberto
-    recognition.interimResults = false;
-    ativo = true;
-    
-    recognition.onstart = () => { 
-      rodando = true; 
-      document.getElementById("status").innerHTML = "🎙️ ouvindo..."; 
-    };
-    
-    recognition.onerror = (e) => { 
-      if (e.error === 'not-allowed') { 
-        ativo = false; 
-        rodando = false; 
-        document.getElementById("status").innerHTML = "❌ microfone bloqueado"; 
-      } 
-    };
-    
-    recognition.onresult = (event) => {
-      let agora = Date.now();
-      let textoOriginal = event.results[event.results.length-1][0].transcript.toLowerCase();
-      
-      let hashAtual = getCommandHash(textoOriginal);
-      
-      // IGNORA SE FOR O MESMO COMANDO EM MENOS DE 1.5 SEGUNDOS
-      if (hashAtual === ultimoComandoHash && (agora - ultimoComandoTimestamp) < 1500) {
-        document.getElementById("debug").innerHTML = ⏸️ Ignorado (repetição rápida): "${textoOriginal}";
-        return;
-      }
-      
-      ultimoComandoHash = hashAtual;
-      ultimoComandoTimestamp = agora;
-      
-      document.getElementById("debug").innerHTML = 📝 "${textoOriginal}";
-      
-      let textoComparacao = textoOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      
-      // VOLTAR
-      if (textoComparacao.includes("voltar") || textoComparacao.includes("volta")) { 
-        voltarParcela(); 
-        falar("ok");
-        return; 
-      }
-      
-      // PULAR / PRÓXIMA
-      if (textoComparacao.includes("pular") || textoComparacao.includes("pula") || 
-          textoComparacao.includes("proxima") || textoComparacao.includes("proximo")) { 
-        pularParcela(); 
-        falar("ok");
-        return; 
-      }
-      
-      // CORRIGIR
-      if (textoComparacao.includes("corrigir") || textoComparacao.includes("corrige")) { 
-        let nums = textoComparacao.match(/\d+/); 
-        if (nums) corrigirNota(nums[0]); 
-        else falar("número?"); 
-        return; 
-      }
-      
-      // PARCELA ATUAL
-      if (textoComparacao.includes("parcela atual") || textoComparacao.includes("qual parcela")) { 
-        if (current < dados.length) falar(parcela ${dados[current].plot_id}); 
-        return; 
-      }
-      
-      // IR PARA PARCELA X
-      if (textoComparacao.includes("parcela") || textoComparacao.includes("lote")) { 
-        let nums = textoComparacao.match(/\d+/); 
-        if (nums) { 
-          irParaParcela(parseInt(nums[0])); 
-          return; 
-        } else { 
-          falar("número?"); 
-          return; 
-        }
-      }
-      
-      // NÚMERO DIRETO
-      let num = textoComparacao.match(/\d+/);
-      if (num && num[0] >= 1 && num[0] <= 9) { 
-        salvarNota(parseInt(num[0])); 
-        return; 
-      } else if (num) {
-        notaInvalida();
-        falar(nota ${num[0]} inválida);
-        return;
-      }
-      
-      // NÚMEROS POR EXTENSO
-      let extenso = { "um":1, "dois":2, "tres":3, "quatro":4, "cinco":5, "seis":6, "sete":7, "oito":8, "nove":9 };
-      for (let [pal, val] of Object.entries(extenso)) {
-        if (textoComparacao.includes(pal)) { 
-          salvarNota(val); 
-          return; 
-        }
-      }
-      
-      falar("comando?");
-    };
-    
-    recognition.onend = () => { 
-      rodando = false; 
-      if (ativo) { 
-        try { recognition.start(); } catch(e){} 
-      } else { 
-        document.getElementById("status").innerHTML = "⏹️ Parado"; 
-      } 
-    };
-    
-    recognition.start();
-  }
-
-  function stopRecognition() { 
-    ativo = false; 
-    if (recognition) recognition.stop(); 
-    rodando = false; 
-    document.getElementById("status").innerHTML = "⏹️ Parado"; 
-    falar("voz off"); 
-  }
-
-  window.carregarCSV = carregarCSV;
-  window.startRecognition = startRecognition;
-  window.stopRecognition = stopRecognition;
-  window.exportarCSV = exportarCSV;
-  window.irParaParcela = irParaParcela;
-  window.mudarPagina = mudarPagina;
-  window.resetarExperimento = resetarExperimento;
-
-  window.onload = () => {
-    configurarInputManual();
-    document.getElementById("notaManualInput").focus();
-    if (!carregarDadosSalvos()) {
-      document.getElementById("debug").innerHTML = "✅ Pronto! Carregue um CSV para começar.";
-    }
-    initAudio();
+    garantirFocoDigitacao();
   };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSVLine(line) {
+  const out = [];
+  let cur = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (quoted && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        quoted = !quoted;
+      }
+    } else if ((ch === ',' || ch === ';' || ch === '\t') && !quoted) {
+      out.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function csvCampo(valor) {
+  const s = String(valor ?? '');
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+function exportarCSV() {
+  if (!dados.length) {
+    alert('Nenhum dado para exportar');
+    return;
+  }
+
+  let cab = 'plot_id,genotipo,testemunha';
+  for (let i = 1; i <= NUM_AVALIACOES; i++) cab += `,${csvCampo(nomeAvaliacao(i))}`;
+  cab += ',descricao';
+
+  const csv = cab + '\n' + dados.map(d => {
+    let l = `${d.plot_id},${csvCampo(d.genotipo)},${d.testemunha ? 'sim' : ''}`;
+    for (let i = 1; i <= NUM_AVALIACOES; i++) l += `,${d[`nota${i}`] ?? ''}`;
+    l += `,${csvCampo(d.descricao || '')}`;
+    return l;
+  }).join('\n');
+
+  const now = new Date();
+  const ts = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  const sug = `${nomeCSV || 'resultado'}_${ts}.csv`;
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:1000;padding-bottom:env(safe-area-inset-bottom);';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:24px 24px 0 0;padding:24px 20px;width:100%;max-width:500px;">
+      <div style="width:36px;height:4px;background:#E0E0E0;border-radius:2px;margin:0 auto 20px;"></div>
+      <p style="font-size:1rem;font-weight:700;color:#000;margin:0 0 6px;">💾 Exportar CSV</p>
+      <p style="font-size:0.72rem;color:#8E8E93;margin:0 0 14px;">Timestamp: ${ts}</p>
+      <input id="exportNome" type="text" value="${escHTML(sug)}"
+        style="width:100%;border:1.5px solid #E5E5EA;border-radius:12px;padding:12px 14px;font-size:0.9rem;margin-bottom:16px;-webkit-appearance:none;appearance:none;">
+      <div style="display:flex;gap:10px;">
+        <button id="exportCancelar" style="flex:1;background:#F2F2F7;color:#3C3C43;border:none;border-radius:12px;padding:13px;font-size:0.9rem;font-weight:600;cursor:pointer;">Cancelar</button>
+        <button id="exportConfirmar" style="flex:2;background:#34C759;color:#fff;border:none;border-radius:12px;padding:13px;font-size:0.9rem;font-weight:700;cursor:pointer;">Salvar</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('exportConfirmar').onclick = () => {
+    let nome = document.getElementById('exportNome').value.trim() || sug;
+    if (!nome.endsWith('.csv')) nome += '.csv';
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nome;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    document.body.removeChild(overlay);
+    beepNota();
+    garantirFocoDigitacao();
+  };
+  document.getElementById('exportCancelar').onclick = () => {
+    document.body.removeChild(overlay);
+    garantirFocoDigitacao();
+  };
+}
+
+function toggleManual() {
+  const card = document.getElementById('manualCard');
+  const aberto = card.style.display !== 'none';
+  if (aberto) {
+    fecharManual();
+  } else {
+    card.style.display = 'flex';
+    document.getElementById('btnManual')?.classList.add('ativo');
+    setTimeout(() => document.getElementById('notaDigitada')?.focus(), 100);
+  }
+}
+
+function fecharManual() {
+  const card = document.getElementById('manualCard');
+  card.style.display = 'none';
+  document.getElementById('btnManual')?.classList.remove('ativo');
+  const inp = document.getElementById('notaDigitada');
+  if (inp) {
+    inp.value = '';
+    inp.blur();
+  }
+}
+
+function configurarDigitacao() {
+  let inp = document.getElementById('notaDigitada');
+  const novo = inp.cloneNode(true);
+  inp.parentNode.replaceChild(novo, inp);
+  inp = novo;
+  inp.setAttribute('maxlength', String(Math.max(String(NOTA_MIN).length, String(NOTA_MAX).length, 2)));
+  inp.setAttribute('autocomplete', 'off');
+  inp.setAttribute('inputmode', 'numeric');
+  let timerNotaUm = null;
+
+  const finalizar = () => {
+    if (timerNotaUm) {
+      clearTimeout(timerNotaUm);
+      timerNotaUm = null;
+    }
+    const limpo = inp.value.replace(/\D/g, '');
+    if (!limpo) return;
+    salvarNota(parseInt(limpo, 10));
+    inp.value = '';
+    inp.focus();
+  };
+
+  const processar = (v) => {
+    if (timerNotaUm) {
+      clearTimeout(timerNotaUm);
+      timerNotaUm = null;
+    }
+    if (!v) return;
+    const maxLen = Math.max(String(NOTA_MIN).length, String(NOTA_MAX).length, 2);
+    const limpo = v.replace(/\D/g, '').slice(0, maxLen);
+    if (!limpo) {
+      inp.value = '';
+      return;
+    }
+    inp.value = limpo;
+
+    if (NOTA_MAX > 10 || NOTA_MIN < 0) {
+      return;
+    }
+
+    if (limpo === '1') {
+      timerNotaUm = setTimeout(() => {
+        if (inp.value === '1' && dados.length && current < dados.length) {
+          finalizar();
+        }
+        timerNotaUm = null;
+      }, 450);
+      return;
+    }
+
+    const n = parseInt(limpo, 10);
+    if (n >= NOTA_MIN && n <= NOTA_MAX && dados.length && current < dados.length) {
+      salvarNota(n);
+      setTimeout(() => {
+        inp.value = '';
+        inp.focus();
+      }, 50);
+    } else {
+      beepErro();
+      inp.value = '';
+    }
+  };
+
+  inp.addEventListener('input', e => {
+    if (e.target.value.length > 0) processar(e.target.value);
+  });
+
+  inp.addEventListener('keydown', e => {
+    if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      finalizar();
+      return;
+    }
+    if (e.key >= '0' && e.key <= '9') {
+      return;
+    } else if (e.key === 'Escape') {
+      fecharManual();
+    } else {
+      e.preventDefault();
+      beepErro();
+    }
+  });
+
+  inp.addEventListener('paste', e => {
+    e.preventDefault();
+    processar((e.clipboardData || window.clipboardData).getData('text'));
+  });
+
+  window.confirmarNotaManual = finalizar;
+}
+
+let modoBolso = false;
+let timerDesbloqueioBolso = null;
+let wakeLockBolso = null;
+
+async function solicitarWakeLockBolso() {
+  try {
+    if ('wakeLock' in navigator) wakeLockBolso = await navigator.wakeLock.request('screen');
+  } catch (e) {}
+}
+
+function liberarWakeLockBolso() {
+  try { wakeLockBolso?.release?.(); } catch (e) {}
+  wakeLockBolso = null;
+}
+
+function atualizarModoBolsoUI() {
+  const overlay = document.getElementById('pocketLock');
+  if (!overlay) return;
+  overlay.classList.toggle('ativo', modoBolso);
+  const status = document.getElementById('pocketStatus');
+  if (status) status.textContent = rodando
+    ? 'Toques acidentais bloqueados. Ouvindo pelo microfone.'
+    : 'Toques acidentais bloqueados. Toque em Voz se precisar iniciar a escuta depois de desbloquear.';
+}
+
+function ativarModoBolso() {
+  if (!dados.length) {
+    beepErro();
+    document.getElementById('debug').textContent = '⚠️ Carregue um CSV antes do Modo bolso';
+    return;
+  }
+  modoBolso = true;
+  atualizarModoBolsoUI();
+  solicitarWakeLockBolso();
+  document.getElementById('debug').textContent = '🔒 Modo bolso ativo';
+  if (!rodando && modoOnline) {
+    VozEngine.iniciar();
+    setTimeout(() => atualizarModoBolsoUI(), 600);
+  }
+}
+
+function desativarModoBolso() {
+  modoBolso = false;
+  cancelarDesbloqueioBolso();
+  liberarWakeLockBolso();
+  atualizarModoBolsoUI();
+  document.getElementById('debug').textContent = '🔓 Modo bolso desativado';
+}
+
+function iniciarDesbloqueioBolso(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const btn = document.getElementById('pocketUnlock');
+  btn?.classList.add('segurando');
+  clearTimeout(timerDesbloqueioBolso);
+  timerDesbloqueioBolso = setTimeout(() => desativarModoBolso(), 2200);
+}
+
+function cancelarDesbloqueioBolso() {
+  clearTimeout(timerDesbloqueioBolso);
+  timerDesbloqueioBolso = null;
+  document.getElementById('pocketUnlock')?.classList.remove('segurando');
+}
+
+function configurarModoBolso() {
+  const overlay = document.getElementById('pocketLock');
+  const btn = document.getElementById('pocketUnlock');
+  if (!overlay || !btn) return;
+  ['touchstart', 'pointerdown', 'mousedown'].forEach(evt => btn.addEventListener(evt, iniciarDesbloqueioBolso));
+  ['touchend', 'touchcancel', 'pointerup', 'pointercancel', 'pointerleave', 'mouseup', 'mouseleave'].forEach(evt => btn.addEventListener(evt, cancelarDesbloqueioBolso));
+  ['click', 'touchmove', 'pointermove'].forEach(evt => overlay.addEventListener(evt, e => {
+    if (e.target !== btn && !btn.contains(e.target)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, { passive: false }));
+}
+
+function startRecognition() { VozEngine.iniciar(); atualizarModoBolsoUI(); }
+function stopRecognition() { VozEngine.parar(); atualizarModoBolsoUI(); }
+
+window.carregarCSV = carregarCSV;
+window.startRecognition = startRecognition;
+window.stopRecognition = stopRecognition;
+window.exportarCSV = exportarCSV;
+window.resetarExperimento = resetarExperimento;
+window.mudarPagina = mudarPagina;
+window.setNumAvaliacoes = setNumAvaliacoes;
+window.setFaixaNotas = setFaixaNotas;
+window.setIdiomaApp = setIdiomaApp;
+window.setNomeAvaliacao = setNomeAvaliacao;
+window.falarGuiaConfiguracao = falarGuiaConfiguracao;
+window.irParaCelula = irParaCelula;
+window.pularParcela = pularParcela;
+window.garantirFocoDigitacao = garantirFocoDigitacao;
+window.solicitarPermissao = solicitarPermissao;
+window.toggleRede = toggleRede;
+window.toggleManual = toggleManual;
+window.limparDescricao = limparDescricao;
+window.setAuthMode = setAuthMode;
+window.executarAuth = executarAuth;
+window.logoutFirebase = logoutFirebase;
+window.ativarModoBolso = ativarModoBolso;
+window.desativarModoBolso = desativarModoBolso;
+
+window.addEventListener('resize', atualizarOffsetFixo);
+
+window.addEventListener('load', async () => {
+  atualizarOffsetFixo();
+  atualizarBadgeModo();
+  atualizarToggleRede();
+  atualizarOffsetFixo();
+  atualizarUIIdioma();
+  atualizarUIFaixaNotas();
+  atualizarNomesAvaliacoesUI();
+  configurarDigitacao();
+  configurarModoBolso();
+  setAuthMode('login');
+  await iniciarAuthFirebase();
+  const recuperouDados = await carregarDados();
+  if (!recuperouDados) document.getElementById('debug').textContent = `✅ App atualizado · ${APP_VERSION}`;
+  setTimeout(() => garantirFocoDigitacao(), 300);
+
+});
 </script>
 </body>
 </html>
